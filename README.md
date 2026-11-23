@@ -92,7 +92,7 @@ Go to **AI playground → Customer simulator** and type, for example, `2 large p
 
 1. **Database.** Create a Postgres database (Neon, Supabase or Railway). Use the **pooled** URL for `DATABASE_URL` and the **direct** URL for `DIRECT_URL`.
 2. **Vercel.** Import the repo. The build command is `npm run build` (it runs `prisma generate`). Set the environment variables from `.env.example`. At minimum you need `APP_URL` (your https domain), `DATABASE_URL`, `DIRECT_URL`, `ENCRYPTION_KEY`, `HASH_KEY` and `OPENAI_API_KEY`. Set `DEMO_MODE=false` unless you want the public demo button.
-3. **Migrations.** Run `npx prisma migrate deploy` against production, either once from your machine or as a release step (`npm run db:deploy`). Run `npm run db:seed` only if you want the demo restaurant.
+3. **Migrations.** `npm run build` runs `prisma migrate deploy` automatically, so every Vercel deploy brings the database schema up to date. Use `npm run build:app` for a build that doesn't touch the database. Run `npm run db:seed` only if you want the demo restaurant.
 4. **Queue (strongly recommended).** In Upstash, create QStash and set `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY` and `QSTASH_NEXT_SIGNING_KEY`. QStash calls `POST {APP_URL}/api/jobs` with signed requests and retries failures. Without it, jobs run after the response inside the same serverless invocation, which is fine at low volume but has no retries.
 5. **Rate limiting.** Create an Upstash Redis database and set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
 6. **Storage.** In Supabase Storage, create a **private** bucket `voice-notes` and a **public** bucket `public-media`, then set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Local-disk storage does **not** persist on Vercel.
