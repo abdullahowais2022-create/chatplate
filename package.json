@@ -5,7 +5,7 @@
   "description": "AI WhatsApp ordering assistant for local restaurants",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "node scripts/build.mjs",
     "build:app": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",

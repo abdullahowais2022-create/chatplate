@@ -1,10 +1,15 @@
+import { setupProblems } from "@/server/setup";
 import { redirect } from "next/navigation";
 import { requirePageSession } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { LiveProvider } from "@/components/dashboard/live";
 
+// Always render per request (auth, live data, and setup checks).
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  if ((await setupProblems()).length) redirect("/setup");
   const s = await requirePageSession();
   if (!s.onboardingCompleted && s.role === "OWNER") redirect("/onboarding");
   const [r, unreadNotifications, attention] = await Promise.all([

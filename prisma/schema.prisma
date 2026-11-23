@@ -7,9 +7,10 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  // Runtime uses DATABASE_URL (the pooled URL on Neon/Supabase). Migrations run through
+  // scripts/build.mjs, which uses DIRECT_URL when it is set, so DIRECT_URL stays optional.
+  url      = env("DATABASE_URL")
 }
 
 // ───────────────────────────── Enums ─────────────────────────────

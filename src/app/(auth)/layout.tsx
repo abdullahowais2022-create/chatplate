@@ -1,9 +1,14 @@
+import { setupProblems } from "@/server/setup";
 import { redirect } from "next/navigation";
 import { getSession } from "@/server/auth/session";
 import { Logo } from "@/components/brand";
 import { MessageCircle, Languages, ClipboardCheck } from "lucide-react";
 
+// Always render per request (auth, live data, and setup checks).
+export const dynamic = "force-dynamic";
+
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
+  if ((await setupProblems()).length) redirect("/setup");
   if (await getSession()) redirect("/dashboard");
   return (
     <div className="grid grid-cols-1 min-h-screen lg:grid-cols-2">

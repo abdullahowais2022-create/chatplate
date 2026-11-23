@@ -83,20 +83,25 @@ Go to **AI playground → Customer simulator** and type, for example, `2 large p
 | `npm test` | Unit tests (AI flow, validation, hours, zones, languages, webhook signature and parsing) |
 | `npm run typecheck` / `lint` | TypeScript / ESLint |
 | `npm run db:migrate` | Create a new migration in development |
-| `npm run db:deploy` | Apply migrations (production) |
+| `npm run db:deploy` | Apply migrations manually (the production build already does this) |
 | `npm run db:seed` | Reset and reseed the demo restaurant (other restaurants are untouched) |
 
 ---
 
 ## Deploying (Vercel + Neon/Supabase + Upstash)
 
-1. **Database.** Create a Postgres database (Neon, Supabase or Railway). Use the **pooled** URL for `DATABASE_URL` and the **direct** URL for `DIRECT_URL`.
-2. **Vercel.** Import the repo. The build command is `npm run build` (it runs `prisma generate`). Set the environment variables from `.env.example`. At minimum you need `APP_URL` (your https domain), `DATABASE_URL`, `DIRECT_URL`, `ENCRYPTION_KEY`, `HASH_KEY` and `OPENAI_API_KEY`. Set `DEMO_MODE=false` unless you want the public demo button.
-3. **Migrations.** `npm run build` runs `prisma migrate deploy` automatically, so every Vercel deploy brings the database schema up to date. Use `npm run build:app` for a build that doesn't touch the database. Run `npm run db:seed` only if you want the demo restaurant.
-4. **Queue (strongly recommended).** In Upstash, create QStash and set `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY` and `QSTASH_NEXT_SIGNING_KEY`. QStash calls `POST {APP_URL}/api/jobs` with signed requests and retries failures. Without it, jobs run after the response inside the same serverless invocation, which is fine at low volume but has no retries.
-5. **Rate limiting.** Create an Upstash Redis database and set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
-6. **Storage.** In Supabase Storage, create a **private** bucket `voice-notes` and a **public** bucket `public-media`, then set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Local-disk storage does **not** persist on Vercel.
-7. **Email (optional).** Set `RESEND_API_KEY` and `EMAIL_FROM` with a verified domain.
+> **Use Vercel, not Cloudflare.** This app needs a Node.js server runtime (Prisma, encryption, file uploads). Cloudflare Pages/Workers can't run it without porting it to the Workers runtime.
+
+1. **Database.** Create a Postgres database (Neon, Supabase or Railway).
+2. **Vercel.** Import the GitHub repo. The defaults are fine (framework: Next.js; build command: `npm run build`). Add the environment variables:
+   - **Required:** `DATABASE_URL` (on Neon, the pooled connection string), `ENCRYPTION_KEY`, `HASH_KEY` (generate each with `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`).
+   - **Recommended:** `DIRECT_URL` (the non-pooled connection string, used for migrations) and `OPENAI_API_KEY`. Set `DEMO_MODE=false` unless you want the public demo button.
+   - `APP_URL` is optional on Vercel; it defaults to your production domain.
+3. **Deploy.** The build (`scripts/build.mjs`) creates and updates the database tables automatically. **It never fails because of configuration.** If something is missing or wrong, the site shows a **Setup needed** page that says exactly what to fix. Change the variable, then use Deployments → ⋯ → Redeploy.
+4. **Demo data (optional).** Run `npm run db:seed` with `DATABASE_URL` pointing at production if you want the demo restaurant.
+5. **Queue (strongly recommended).** In Upstash, create QStash and set `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY` and `QSTASH_NEXT_SIGNING_KEY`. QStash calls `POST {APP_URL}/api/jobs` with signed requests and retries failures. Without it, jobs run after the response inside the same serverless invocation, which is fine at low volume but has no retries.
+6. **Rate limiting.** Create an Upstash Redis database and set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
+7. **Storage and email.** In Supabase Storage, create a **private** bucket `voice-notes` and a **public** bucket `public-media`, then set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Local-disk storage does **not** persist on Vercel. For email notifications (optional), set `RESEND_API_KEY` and `EMAIL_FROM` with a verified domain.
 8. **WhatsApp.** Follow [docs/WHATSAPP_SETUP.md](docs/WHATSAPP_SETUP.md) for each restaurant.
 
 The webhook and job routes run on the Node.js runtime. `/api/jobs` sets `maxDuration = 120`; on Vercel Hobby the cap is lower, so use a Pro plan for long voice-note transcriptions.

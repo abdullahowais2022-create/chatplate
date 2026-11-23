@@ -32,9 +32,18 @@ let cached: Env | null = null;
 /** Validated server environment. Throws a readable error on misconfiguration. */
 export function env(): Env {
   if (cached) return cached;
-  const clean = Object.fromEntries(
-    Object.entries(process.env).map(([k, v]) => [k, v === "" ? undefined : v]),
+  // Trim pasted values (stray spaces/quotes are a common copy-paste problem) and treat "" as unset.
+  const clean: Record<string, string | undefined> = Object.fromEntries(
+    Object.entries(process.env).map(([k, v]) => {
+      const t = v?.trim().replace(/^["']|["']$/g, "");
+      return [k, t ? t : undefined];
+    }),
   );
+  // On Vercel, default APP_URL to the project's production domain.
+  if (!clean.APP_URL) {
+    const host = clean.VERCEL_PROJECT_PRODUCTION_URL ?? clean.VERCEL_URL;
+    if (host) clean.APP_URL = `https://${host}`;
+  }
   const parsed = schema.safeParse(clean);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
@@ -44,5 +53,6 @@ export function env(): Env {
   return cached;
 }
 
-export const isDemoMode = () => env().DEMO_MODE === "true";
-export const hasOpenAI = () => Boolean(env().OPENAI_API_KEY);
+// These read process.env directly so they never throw on a partially configured deployment.
+export const isDemoMode = () => process.env.DEMO_MODE?.trim() === "true";
+export const hasOpenAI = () => Boolean(process.env.OPENAI_API_KEY?.trim());
