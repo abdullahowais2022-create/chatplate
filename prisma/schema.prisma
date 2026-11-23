@@ -1,0 +1,693 @@
+// Chatplate data model.
+// Every tenant-owned table carries `restaurantId` and is always queried with it (see src/server/auth).
+// Money is stored as Decimal(10,2) and always recomputed server-side from menu data.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum Role {
+  OWNER
+  MANAGER
+  STAFF
+}
+
+enum WhatsAppStatus {
+  NOT_CONNECTED
+  PENDING_VERIFICATION
+  CONNECTED
+  ERROR
+}
+
+enum ConversationMode {
+  AI
+  HUMAN
+}
+
+enum ConversationState {
+  IDLE
+  ORDERING
+  AWAITING_CONFIRMATION
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageSender {
+  CUSTOMER
+  AI
+  STAFF
+  SYSTEM
+}
+
+enum MessageType {
+  TEXT
+  AUDIO
+  IMAGE
+  LOCATION
+  INTERACTIVE
+  BUTTON
+  DOCUMENT
+  VIDEO
+  STICKER
+  CONTACTS
+  REACTION
+  SYSTEM
+  UNKNOWN
+}
+
+enum MessageStatus {
+  RECEIVED
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  SIMULATED
+}
+
+enum TranscriptionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderType {
+  DELIVERY
+  PICKUP
+}
+
+enum OrderSource {
+  WHATSAPP
+  MANUAL
+}
+
+enum PaymentPreference {
+  CASH
+  CARD_ON_DELIVERY
+  CARD_AT_PICKUP
+  BANK_TRANSFER
+  PAY_AT_RESTAURANT
+  UNKNOWN
+}
+
+enum CustomerTag {
+  VIP
+  REGULAR
+  BLOCKED
+}
+
+enum ActorType {
+  CUSTOMER
+  STAFF
+  AI
+  SYSTEM
+}
+
+enum OrderEventType {
+  CREATED
+  STATUS_CHANGED
+  MODIFIED
+  ASSIGNED
+  CANCELLED
+  NOTE
+}
+
+enum WebhookEventStatus {
+  RECEIVED
+  PROCESSING
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+enum NotificationType {
+  NEW_ORDER
+  ORDER_UPDATED
+  ORDER_CANCELLED
+  NEEDS_HUMAN
+  COMPLAINT
+  SYSTEM
+}
+
+enum DeliveryZoneType {
+  RADIUS
+  AREA
+}
+
+// ───────────────────────────── Tenant ─────────────────────────────
+
+model Restaurant {
+  id                 String   @id @default(cuid())
+  name               String
+  slug               String   @unique
+  logoUrl            String?
+  address            String?
+  phone              String?
+  email              String?
+  timezone           String   @default("UTC")
+  currency           String   @default("USD")
+  latitude           Float?
+  longitude          Float?
+  defaultLanguage    String   @default("en")
+  supportedLanguages String[] @default(["en"])
+
+  // Ordering
+  deliveryEnabled      Boolean @default(true)
+  pickupEnabled        Boolean @default(true)
+  minimumOrderAmount   Decimal @default(0) @db.Decimal(10, 2)
+  pickupInstructions   String?
+  deliveryInstructions String?
+  prepTimeMinutes      Int     @default(20)
+  allowPreorders       Boolean @default(true)
+  orderSeq             Int     @default(1000)
+
+  // Payment *preferences* only. No payment processing exists in this product.
+  acceptedPaymentMethods PaymentPreference[] @default([CASH])
+  askPaymentPreference   Boolean             @default(false)
+  paymentNote            String?
+
+  // AI behaviour
+  aiEnabled                  Boolean  @default(true)
+  aiTone                     String   @default("friendly")
+  aiCustomInstructions       String?
+  greetingMessage            String?
+  autoReplyWhenClosed        Boolean  @default(true)
+  closedMessage              String?
+  handoffOnComplaint         Boolean  @default(true)
+  handoffConfidenceThreshold Float    @default(0.45)
+  handoffKeywords            String[] @default(["allergy", "allergic", "refund", "manager", "lawyer"])
+  maxClarifications          Int      @default(3)
+
+  // Notifications
+  notifyEmail             Boolean  @default(false)
+  notifyEmailAddresses    String[] @default([])
+  notifyWhatsApp          Boolean  @default(false)
+  notifyWhatsAppNumberEnc String?
+  notifyOnNewOrder        Boolean  @default(true)
+  notifyOnNeedsHuman      Boolean  @default(true)
+  notifyOnComplaint       Boolean  @default(true)
+
+  isDemo                Boolean   @default(false)
+  onboardingStep        Int       @default(0)
+  onboardingCompletedAt DateTime?
+  liveVersion           Int       @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  whatsapp       WhatsAppAccount?
+  users          User[]
+  customers      Customer[]
+  conversations  Conversation[]
+  messages       Message[]
+  voiceNotes     VoiceNote[]
+  orders         Order[]
+  menuCategories MenuCategory[]
+  menuItems      MenuItem[]
+  deliveryZones  DeliveryZone[]
+  businessHours  BusinessHour[]
+  webhookEvents  WebhookEvent[]
+  auditLogs      AuditLog[]
+  notifications  Notification[]
+}
+
+/// WhatsApp Cloud API connection. Secrets are AES-256-GCM encrypted and never sent to the browser.
+model WhatsAppAccount {
+  id                 String         @id @default(cuid())
+  restaurantId       String         @unique
+  wabaId             String?
+  phoneNumberId      String?        @unique
+  displayPhoneNumber String?
+  accessTokenEnc     String?
+  appSecretEnc       String?
+  verifyToken        String
+  /// Public, unguessable path segment for this restaurant's webhook URL (not an internal id).
+  webhookKey         String         @unique
+  status             WhatsAppStatus @default(NOT_CONNECTED)
+  webhookVerifiedAt  DateTime?
+  lastWebhookAt      DateTime?
+  lastTestAt         DateTime?
+  lastError          String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+// ───────────────────────────── Auth ─────────────────────────────
+
+model User {
+  id                 String    @id @default(cuid())
+  restaurantId       String
+  email              String    @unique
+  name               String
+  passwordHash       String
+  role               Role      @default(STAFF)
+  isActive           Boolean   @default(true)
+  emailNotifications Boolean   @default(true)
+  mustChangePassword Boolean   @default(false)
+  lastLoginAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  restaurant            Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  sessions              Session[]
+  assignedOrders        Order[]        @relation("OrderAssignee")
+  assignedConversations Conversation[] @relation("ConversationAssignee")
+  sentMessages          Message[]      @relation("MessageStaff")
+  auditLogs             AuditLog[]
+
+  @@index([restaurantId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ───────────────────────────── Customers & conversations ─────────────────────────────
+
+model Customer {
+  id                String        @id @default(cuid())
+  restaurantId      String
+  /// HMAC-SHA256 of the E.164 WhatsApp id, used for lookups.
+  phoneHash         String
+  /// AES-256-GCM encrypted phone number.
+  phoneEnc          String
+  phoneLast4        String
+  name              String?
+  profileName       String?
+  preferredLanguage String?
+  savedAddress      String?
+  savedLat          Float?
+  savedLng          Float?
+  tags              CustomerTag[] @default([])
+  notes             String?
+  orderCount        Int           @default(0)
+  totalSpent        Decimal       @default(0) @db.Decimal(12, 2)
+  lastOrderAt       DateTime?
+  lastMessageAt     DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
+
+  restaurant    Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+  orders        Order[]
+
+  @@unique([restaurantId, phoneHash])
+  @@index([restaurantId, lastMessageAt])
+}
+
+/// One thread per customer, like WhatsApp itself.
+model Conversation {
+  id                    String            @id @default(cuid())
+  restaurantId          String
+  customerId            String
+  mode                  ConversationMode  @default(AI)
+  state                 ConversationState @default(IDLE)
+  language              String?
+  /// Working cart + order details while the customer is ordering (see src/server/ai/types.ts DraftOrder).
+  draft                 Json?
+  /// Order being modified, if the customer is editing an already-confirmed order.
+  editingOrderId        String?
+  clarificationAttempts Int               @default(0)
+  needsHuman            Boolean           @default(false)
+  needsHumanReason      String?
+  assignedToId          String?
+  unreadCount           Int               @default(0)
+  aiSuggestion          String?
+  lastMessagePreview    String?
+  lastMessageAt         DateTime?
+  /// Last inbound message time. Free-form replies are only allowed within 24h of it (Meta policy).
+  lastInboundAt         DateTime?
+  /// Processing lease so messages from one customer are handled strictly one at a time.
+  lockedUntil           DateTime?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  assignedTo User?      @relation("ConversationAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  messages   Message[]
+  orders     Order[]
+
+  @@unique([restaurantId, customerId])
+  @@index([restaurantId, lastMessageAt])
+  @@index([restaurantId, needsHuman])
+}
+
+model Message {
+  id             String           @id @default(cuid())
+  restaurantId   String
+  conversationId String
+  direction      MessageDirection
+  sender         MessageSender
+  type           MessageType      @default(TEXT)
+  /// WhatsApp message id (wamid). Unique so duplicates from webhook retries are dropped.
+  waMessageId    String?          @unique
+  body           String?
+  /// Raw inbound payload or outbound request (for troubleshooting).
+  payload        Json?
+  /// AI troubleshooting data: extraction, validation, decision, model used.
+  aiData         Json?
+  language       String?
+  status         MessageStatus    @default(RECEIVED)
+  error          String?
+  staffUserId    String?
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  failedAt       DateTime?
+  createdAt      DateTime         @default(now())
+
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  staffUser    User?        @relation("MessageStaff", fields: [staffUserId], references: [id], onDelete: SetNull)
+  voiceNote    VoiceNote?
+
+  @@index([conversationId, createdAt])
+  @@index([restaurantId, createdAt])
+}
+
+model VoiceNote {
+  id           String              @id @default(cuid())
+  restaurantId String
+  messageId    String              @unique
+  mediaId      String
+  mimeType     String?
+  storageKey   String?
+  sizeBytes    Int?
+  transcript   String?
+  language     String?
+  status       TranscriptionStatus @default(PENDING)
+  error        String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  message    Message    @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+}
+
+// ───────────────────────────── Orders ─────────────────────────────
+
+model Order {
+  id                String            @id @default(cuid())
+  restaurantId      String
+  number            Int
+  customerId        String
+  conversationId    String?
+  status            OrderStatus       @default(NEW)
+  type              OrderType
+  source            OrderSource       @default(WHATSAPP)
+  subtotal          Decimal           @db.Decimal(10, 2)
+  deliveryFee       Decimal           @default(0) @db.Decimal(10, 2)
+  total             Decimal           @db.Decimal(10, 2)
+  currency          String
+  customerName      String?
+  deliveryAddress   String?
+  deliveryLat       Float?
+  deliveryLng       Float?
+  deliveryZoneId    String?
+  scheduledFor      DateTime?
+  paymentPreference PaymentPreference @default(UNKNOWN)
+  notes             String?
+  language          String?
+  assignedToId      String?
+  confirmedAt       DateTime?
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  cancelReason      String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  deletedAt         DateTime?
+
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  deliveryZone DeliveryZone? @relation(fields: [deliveryZoneId], references: [id], onDelete: SetNull)
+  assignedTo   User?         @relation("OrderAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  items        OrderItem[]
+  events       OrderEvent[]
+
+  @@unique([restaurantId, number])
+  @@index([restaurantId, status, createdAt])
+  @@index([restaurantId, createdAt])
+  @@index([customerId])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  menuItemId  String?
+  variantId   String?
+  /// Snapshots so historical orders stay correct when the menu changes.
+  name        String
+  variantName String?
+  /// [{ id, name, price }]
+  addons      Json     @default("[]")
+  removals    String[] @default([])
+  notes       String?
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  lineTotal   Decimal  @db.Decimal(10, 2)
+
+  order    Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+}
+
+/// Order timeline.
+model OrderEvent {
+  id          String         @id @default(cuid())
+  orderId     String
+  type        OrderEventType
+  fromStatus  OrderStatus?
+  toStatus    OrderStatus?
+  actorType   ActorType
+  actorUserId String?
+  message     String?
+  createdAt   DateTime       @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt])
+}
+
+// ───────────────────────────── Menu ─────────────────────────────
+
+model MenuCategory {
+  id           String    @id @default(cuid())
+  restaurantId String
+  name         String
+  /// { "ar": "...", "fr": "..." }
+  nameI18n     Json      @default("{}")
+  description  String?
+  sortOrder    Int       @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  items      MenuItem[]
+
+  @@index([restaurantId, sortOrder])
+}
+
+model MenuItem {
+  id              String    @id @default(cuid())
+  restaurantId    String
+  categoryId      String
+  name            String
+  nameI18n        Json      @default("{}")
+  description     String?
+  descriptionI18n Json      @default("{}")
+  /// Base price. When an item has variants, the variant price is used instead.
+  price           Decimal   @db.Decimal(10, 2)
+  imageUrl        String?
+  isAvailable     Boolean   @default(true)
+  isSoldOut       Boolean   @default(false)
+  dietaryTags     String[]  @default([])
+  /// Extra names customers use ("coke", "coca cola"). Helps matching.
+  aliases         String[]  @default([])
+  sortOrder       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  restaurant Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category   MenuCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  variants   MenuVariant[]
+  addons     MenuAddon[]
+  orderItems OrderItem[]
+
+  @@index([restaurantId, categoryId])
+}
+
+model MenuVariant {
+  id          String  @id @default(cuid())
+  menuItemId  String
+  name        String
+  nameI18n    Json    @default("{}")
+  /// Absolute price for this variant (e.g. Large = 16.50).
+  price       Decimal @db.Decimal(10, 2)
+  isDefault   Boolean @default(false)
+  isAvailable Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@index([menuItemId])
+}
+
+model MenuAddon {
+  id          String  @id @default(cuid())
+  menuItemId  String
+  name        String
+  nameI18n    Json    @default("{}")
+  price       Decimal @default(0) @db.Decimal(10, 2)
+  isAvailable Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@index([menuItemId])
+}
+
+// ───────────────────────────── Business settings ─────────────────────────────
+
+model DeliveryZone {
+  id               String           @id @default(cuid())
+  restaurantId     String
+  name             String
+  type             DeliveryZoneType @default(RADIUS)
+  /// For RADIUS zones: distance from the restaurant's coordinates.
+  radiusKm         Float?
+  /// For AREA zones: neighbourhood names / postcodes matched against the address text.
+  areas            String[]         @default([])
+  fee              Decimal          @default(0) @db.Decimal(10, 2)
+  minimumOrder     Decimal?         @db.Decimal(10, 2)
+  estimatedMinutes Int?
+  isActive         Boolean          @default(true)
+  sortOrder        Int              @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  orders     Order[]
+
+  @@index([restaurantId])
+}
+
+/// Opening hours in the restaurant's timezone. Multiple rows per day allow split shifts;
+/// closeTime earlier than openTime means the shift runs past midnight.
+model BusinessHour {
+  id           String  @id @default(cuid())
+  restaurantId String
+  /// 0 = Sunday … 6 = Saturday
+  dayOfWeek    Int
+  openTime     String
+  closeTime    String
+  isClosed     Boolean @default(false)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, dayOfWeek])
+}
+
+// ───────────────────────────── Infrastructure ─────────────────────────────
+
+model WebhookEvent {
+  id           String             @id @default(cuid())
+  restaurantId String?
+  source       String             @default("whatsapp")
+  /// Idempotency key, e.g. "msg:<wamid>" or "status:<wamid>:<status>".
+  externalId   String             @unique
+  type         String
+  payload      Json
+  status       WebhookEventStatus @default(RECEIVED)
+  attempts     Int                @default(0)
+  error        String?
+  processedAt  DateTime?
+  createdAt    DateTime           @default(now())
+
+  restaurant Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, createdAt])
+  @@index([status, createdAt])
+}
+
+model AuditLog {
+  id           String    @id @default(cuid())
+  restaurantId String
+  actorType    ActorType
+  actorUserId  String?
+  action       String
+  entityType   String
+  entityId     String?
+  before       Json?
+  after        Json?
+  ip           String?
+  createdAt    DateTime  @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  actorUser  User?      @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, createdAt])
+  @@index([restaurantId, entityType, entityId])
+}
+
+model Notification {
+  id             String           @id @default(cuid())
+  restaurantId   String
+  type           NotificationType
+  title          String
+  body           String?
+  link           String?
+  readAt         DateTime?
+  emailSentAt    DateTime?
+  whatsappSentAt DateTime?
+  createdAt      DateTime         @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, createdAt])
+  @@index([restaurantId, readAt])
+}

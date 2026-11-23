@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Chatplate">
+  <defs>
+    <linearGradient id="cp-g" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FB8A3C"/>
+      <stop offset="1" stop-color="#E35413"/>
+    </linearGradient>
+  </defs>
+  <path d="M32 4C16.54 4 4 15.4 4 29.5c0 7.3 3.37 13.88 8.78 18.53L10.2 59.2a1 1 0 0 0 1.43 1.1l12.06-6.02A30.6 30.6 0 0 0 32 55c15.46 0 28-11.4 28-25.5S47.46 4 32 4Z" fill="url(#cp-g)"/>
+  <circle cx="32" cy="29.5" r="17" fill="#FFFFFF"/>
+  <circle cx="32" cy="29.5" r="12.2" fill="none" stroke="#FECCAA" stroke-width="2"/>
+  <circle cx="25.6" cy="29.5" r="2.6" fill="#E35413"/>
+  <circle cx="32" cy="29.5" r="2.6" fill="#F26B1D"/>
+  <circle cx="38.4" cy="29.5" r="2.6" fill="#FB8A3C"/>
+</svg>
