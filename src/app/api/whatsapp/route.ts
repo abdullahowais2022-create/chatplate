@@ -5,7 +5,8 @@ import { db } from "@/server/db";
 import { decryptOrNull, encrypt } from "@/server/crypto";
 import { env } from "@/server/env";
 import { getWhatsAppStatus } from "@/server/services/queries";
-import { getPhoneNumberInfo, MetaApiError } from "@/server/whatsapp/client";
+import { getPhoneNumberInfo, graphFetch, MetaApiError } from "@/server/whatsapp/client";
+import { randomInt } from "node:crypto";
 import { audit } from "@/server/audit";
 
 export const GET = route(async () => {
@@ -28,9 +29,18 @@ export const PUT = route(async (req) => {
   let status: "PENDING_VERIFICATION" | "CONNECTED" | "ERROR" = "PENDING_VERIFICATION";
   let lastError: string | null = null;
   let display = input.displayPhoneNumber ?? acc.displayPhoneNumber;
+  let pin = decryptOrNull(acc.registrationPinEnc);
   try {
-    const info = await getPhoneNumberInfo({ phoneNumberId: input.phoneNumberId, accessToken, wabaId: input.wabaId });
+    const creds = { phoneNumberId: input.phoneNumberId, accessToken, wabaId: input.wabaId };
+    const info = await getPhoneNumberInfo(creds);
     display = info.display_phone_number ?? display;
+    // Make sure Meta sends this account's messages to our app's webhook (safe to repeat).
+    await graphFetch(creds, `/${input.wabaId}/subscribed_apps`, { method: "POST" }).catch((err) => console.warn("[whatsapp] subscribe failed", (err as Error).message));
+    // A real number added in Meta's dashboard must be registered on the Cloud API before it can message.
+    if (info.platform_type && info.platform_type !== "CLOUD_API") {
+      pin ??= String(randomInt(0, 1_000_000)).padStart(6, "0");
+      await graphFetch(creds, `/${input.phoneNumberId}/register`, { method: "POST", body: JSON.stringify({ messaging_product: "whatsapp", pin }) });
+    }
     if (acc.webhookVerifiedAt) status = "CONNECTED";
   } catch (err) {
     status = "ERROR";
@@ -45,6 +55,7 @@ export const PUT = route(async (req) => {
       displayPhoneNumber: display,
       ...(input.accessToken ? { accessTokenEnc: encrypt(input.accessToken) } : {}),
       ...(input.appSecret ? { appSecretEnc: encrypt(input.appSecret) } : {}),
+      ...(pin ? { registrationPinEnc: encrypt(pin) } : {}),
       status,
       lastError,
     },

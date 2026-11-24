@@ -46,6 +46,10 @@ export function explainMetaError(code?: number, fallback?: string): string {
       return "Meta's hello_world template doesn't exist on this WhatsApp account. Instead, send a WhatsApp message from your phone to the business number to test.";
     case 131058:
       return "Meta's hello_world template can't be sent from this number. Send a WhatsApp message from your phone to the business number to test instead.";
+    case 133005:
+      return "This number already has a two-step verification PIN. In WhatsApp Manager → Phone numbers → your number → Two-step verification, turn it off (or reset it), then press Save & verify again.";
+    case 133016:
+      return "Meta has temporarily limited registration attempts for this number. Wait a few hours, then press Save & verify again.";
     case 133010:
       return "The phone number is not registered on the Cloud API.";
     default:
@@ -171,8 +175,8 @@ export async function downloadMedia(creds: WhatsAppCredentials, mediaId: string)
 
 /** Used by the connection test: reads the phone number's display name and status. */
 export async function getPhoneNumberInfo(creds: WhatsAppCredentials) {
-  return graphFetch<{ display_phone_number?: string; verified_name?: string; quality_rating?: string; id: string }>(
+  return graphFetch<{ display_phone_number?: string; verified_name?: string; quality_rating?: string; platform_type?: string; id: string }>(
     creds,
-    `/${creds.phoneNumberId}?fields=display_phone_number,verified_name,quality_rating`,
+    `/${creds.phoneNumberId}?fields=display_phone_number,verified_name,quality_rating,platform_type`,
   );
 }
