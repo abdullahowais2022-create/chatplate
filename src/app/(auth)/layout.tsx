@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { setupProblems } from "@/server/setup";
 import { redirect } from "next/navigation";
 import { getSession } from "@/server/auth/session";
@@ -17,6 +18,11 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         <div className="mx-auto w-full max-w-sm">
           <Logo className="mb-10" markClassName="h-9 w-9" />
           {children}
+          <p className="mt-10 flex gap-4 text-xs text-muted-foreground">
+            <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
+            <Link href="/terms" className="hover:text-foreground">Terms</Link>
+            <Link href="/data-deletion" className="hover:text-foreground">Data deletion</Link>
+          </p>
         </div>
       </div>
       <div className="relative hidden flex-col justify-between bg-[#141210] p-12 text-[#efece6] lg:flex">
