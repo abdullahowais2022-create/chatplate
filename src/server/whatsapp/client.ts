@@ -40,6 +40,12 @@ export function explainMetaError(code?: number, fallback?: string): string {
     case 130429:
     case 80007:
       return "Meta rate limit reached. The message will be retried.";
+    case 131030:
+      return "This number isn't on your test number's allowed list. In Meta: WhatsApp → Step 1. Try it out → Recipient → add the number and confirm the code.";
+    case 132001:
+      return "Meta's hello_world template doesn't exist on this WhatsApp account. Instead, send a WhatsApp message from your phone to the business number to test.";
+    case 131058:
+      return "Meta's hello_world template can't be sent from this number. Send a WhatsApp message from your phone to the business number to test instead.";
     case 133010:
       return "The phone number is not registered on the Cloud API.";
     default:
