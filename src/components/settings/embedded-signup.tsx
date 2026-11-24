@@ -96,7 +96,13 @@ export function EmbeddedSignupButton({ config, onConnected }: { config: Config; 
     try {
       const ids = await waitForIds();
       if (!code || !ids.phoneNumberId || !ids.wabaId) {
-        toast.message(ids.cancelledAt ? "WhatsApp setup was closed before it finished. You can start again any time." : "WhatsApp setup didn't finish. Please try again.");
+        const why = ids.cancelledAt
+          ? `Meta's window was closed at the "${ids.cancelledAt.toLowerCase().replace(/_/g, " ")}" step. You can start again any time.`
+          : !code
+            ? "Facebook's window closed without logging in. If Meta showed an error inside it, take a screenshot of that message and try again."
+            : "You logged in, but the WhatsApp steps in Meta's window weren't completed (choose the business, add the number, then press Finish).";
+        console.warn("[tilltext] embedded signup incomplete", { gotCode: Boolean(code), ...ids });
+        toast.message(why, { duration: 12_000 });
         return;
       }
       const next = await api<WhatsAppStatusDTO & { warning?: string | null }>("/api/whatsapp/embedded", { body: { code, wabaId: ids.wabaId, phoneNumberId: ids.phoneNumberId, existingApp: mode === "app" } });
