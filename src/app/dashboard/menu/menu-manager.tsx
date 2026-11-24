@@ -54,8 +54,8 @@ export function MenuManager({ menu, currency, canEdit }: Props) {
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader
-        title="Menu"
-        description="The AI only offers what's here: the exact names, prices, sizes and add-ons. Mark items sold out and the AI stops accepting them instantly."
+        title="Menu & products"
+        description="The AI only offers what's here: the exact names, prices, sizes and extras. Mark items sold out and the AI stops accepting them instantly."
         actions={canEdit && (
           <>
             <Button variant="outline" onClick={() => setCatDialog({ open: true, cat: null })}><Plus /> Category</Button>

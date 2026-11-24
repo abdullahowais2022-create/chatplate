@@ -3,8 +3,8 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "MenuTexter: WhatsApp ordering for restaurants", template: "%s · MenuTexter" },
-  description: "An AI assistant that takes your restaurant's orders on WhatsApp, in your customers' language.",
+  title: { default: "TillText: WhatsApp ordering for local businesses", template: "%s · TillText" },
+  description: "An AI assistant that takes orders for restaurants and shops on WhatsApp, in your customers' language.",
   robots: { index: false, follow: false },
 };
 

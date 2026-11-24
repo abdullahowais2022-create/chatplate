@@ -16,7 +16,7 @@ const NAV: { href: string; label: string; icon: typeof LayoutDashboard; perm: Pe
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, perm: "overview:read" },
   { href: "/dashboard/inbox", label: "Live inbox", icon: MessagesSquare, perm: "inbox:read", badge: "attention" },
   { href: "/dashboard/orders", label: "Orders", icon: ClipboardList, perm: "orders:read" },
-  { href: "/dashboard/menu", label: "Menu", icon: UtensilsCrossed, perm: "menu:read" },
+  { href: "/dashboard/menu", label: "Menu & products", icon: UtensilsCrossed, perm: "menu:read" },
   { href: "/dashboard/customers", label: "Customers", icon: Users, perm: "customers:read" },
   { href: "/dashboard/business", label: "Business settings", icon: Store, perm: "settings:read" },
   { href: "/dashboard/playground", label: "AI playground", icon: FlaskConical, perm: "playground:use" },
@@ -61,11 +61,11 @@ export function DashboardShell({ user, children }: { user: ShellUser; children: 
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r bg-card lg:flex">
         <div className="flex h-16 items-center border-b px-5"><Logo /></div>
         <div className="border-b px-5 py-3">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Restaurant</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Business</p>
           <p className="truncate font-semibold">{user.restaurantName}</p>
         </div>
         {nav}
-        <div className="border-t p-3 text-xs text-muted-foreground">Payments are collected by your restaurant directly. MenuTexter never processes payments.</div>
+        <div className="border-t p-3 text-xs text-muted-foreground">Payments are collected by your business directly. TillText never processes payments.</div>
       </aside>
 
       {/* Mobile drawer */}
@@ -115,7 +115,7 @@ export function DashboardShell({ user, children }: { user: ShellUser; children: 
         {user.isDemo && (
           <div className="flex items-center gap-2 border-b border-brand-200 bg-brand-50 px-4 py-2 text-xs text-brand-800 sm:px-6">
             <Sparkles className="h-3.5 w-3.5 shrink-0" />
-            <span>Demo restaurant: WhatsApp isn&apos;t connected, so replies are <b>simulated</b>. Use the <Link className="underline" href="/dashboard/playground">AI playground</Link> to chat as a customer.</span>
+            <span>Demo business: WhatsApp isn&apos;t connected, so replies are <b>simulated</b>. Use the <Link className="underline" href="/dashboard/playground">AI playground</Link> to chat as a customer.</span>
           </div>
         )}
         <main className="flex-1 p-4 sm:p-6">{children}</main>

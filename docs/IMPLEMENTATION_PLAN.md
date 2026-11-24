@@ -1,6 +1,6 @@
-# MenuTexter — Implementation Plan
+# TillText — Implementation Plan
 
-MenuTexter is an AI WhatsApp ordering assistant for local restaurants. Customers order
+TillText is an AI WhatsApp ordering assistant for local restaurants. Customers order
 entirely inside WhatsApp; restaurant staff run everything from a dashboard.
 There is **no customer-facing website and no online payment** of any kind.
 

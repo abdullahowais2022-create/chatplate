@@ -26,10 +26,10 @@ export default function SignupPage() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold tracking-tight">Create your restaurant account</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Create your business account</h1>
       <p className="mt-1 text-sm text-muted-foreground">Set up takes about 10 minutes. You&apos;ll connect WhatsApp in the next steps.</p>
       <form onSubmit={submit} className="mt-8 space-y-4">
-        <Field label="Restaurant name"><Input name="restaurantName" required minLength={2} placeholder="e.g. Saffron & Slice" /></Field>
+        <Field label="Business name"><Input name="restaurantName" required minLength={2} placeholder="e.g. Saffron & Slice or Corner Pharmacy" /></Field>
         <Field label="Your name"><Input name="name" required minLength={2} autoComplete="name" /></Field>
         <Field label="Email"><Input name="email" type="email" required autoComplete="email" /></Field>
         <Field label="Password" hint="At least 10 characters, with letters and numbers."><Input name="password" type="password" required minLength={10} autoComplete="new-password" /></Field>

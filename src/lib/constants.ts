@@ -1,5 +1,5 @@
-export const DEMO_EMAIL = "demo@menutexter.app";
-export const APP_NAME = "MenuTexter";
+export const DEMO_EMAIL = "demo@tilltext.app";
+export const APP_NAME = "TillText";
 
 export const STATUS_LABEL: Record<string, string> = {
   NEW: "New",

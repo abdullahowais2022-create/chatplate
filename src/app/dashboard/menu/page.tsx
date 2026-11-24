@@ -3,7 +3,7 @@ import { getMenu } from "@/server/services/queries";
 import { can } from "@/lib/permissions";
 import { MenuManager } from "./menu-manager";
 
-export const metadata = { title: "Menu" };
+export const metadata = { title: "Menu & products" };
 
 export default async function MenuPage() {
   const s = await requirePageSession("menu:read");

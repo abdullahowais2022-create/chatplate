@@ -13,11 +13,11 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
-  { title: "Restaurant profile", icon: Store, description: "The basics customers will see." },
+  { title: "Business profile", icon: Store, description: "The basics customers will see." },
   { title: "Opening hours", icon: Clock, description: "The AI never accepts orders or promises times outside these." },
   { title: "Delivery & pickup", icon: Truck, description: "Zones, fees and minimum order." },
   { title: "Payments", icon: CreditCard, description: "How customers pay you directly. No online payments." },
-  { title: "Menu", icon: UtensilsCrossed, description: "The AI only sells what's on your menu." },
+  { title: "Menu & products", icon: UtensilsCrossed, description: "The AI only sells what's in your menu or product list." },
   { title: "Connect WhatsApp", icon: MessageCircle, description: "Link your WhatsApp Business number." },
   { title: "All set", icon: PartyPopper, description: "" },
 ];

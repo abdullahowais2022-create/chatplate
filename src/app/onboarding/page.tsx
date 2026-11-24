@@ -6,7 +6,7 @@ import { db } from "@/server/db";
 import { can } from "@/lib/permissions";
 import { Wizard } from "./wizard";
 
-export const metadata = { title: "Set up your restaurant" };
+export const metadata = { title: "Set up your business" };
 
 export default async function OnboardingPage() {
   const s = await requirePageSession();

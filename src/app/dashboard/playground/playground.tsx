@@ -258,7 +258,7 @@ function Simulator({ restaurantLocation }: { restaurantLocation: { lat: number; 
       </Card>
       <Card className="flex h-[640px] flex-col overflow-hidden lg:col-span-2">
         <div className="flex items-center gap-3 border-b bg-[#7a2e10] px-4 py-3 text-white">
-          <Bot className="h-5 w-5" /><span className="font-semibold">Your restaurant (WhatsApp preview)</span>
+          <Bot className="h-5 w-5" /><span className="font-semibold">Your business (WhatsApp preview)</span>
           {conv && <Badge variant={conv.mode === "AI" ? "brand" : "info"} className="ml-auto">{conv.mode === "AI" ? "AI handling" : "Staff handling"}</Badge>}
         </div>
         <div className="chat-bg flex-1 space-y-2 overflow-y-auto p-4">

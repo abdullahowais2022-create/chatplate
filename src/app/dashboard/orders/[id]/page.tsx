@@ -56,7 +56,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
                 <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{m(o.subtotal)}</span></div>
                 {o.type === "DELIVERY" && <div className="flex justify-between"><span className="text-muted-foreground">Delivery fee{o.deliveryZone ? ` (${o.deliveryZone})` : ""}</span><span>{m(o.deliveryFee)}</span></div>}
                 <div className="flex justify-between text-base font-bold"><span>Total</span><span>{m(o.total)}</span></div>
-                <p className="pt-1 text-xs text-muted-foreground">Payment preference: <b>{PAYMENT_LABEL[o.paymentPreference]}</b>. Collected by the restaurant, not online.</p>
+                <p className="pt-1 text-xs text-muted-foreground">Payment preference: <b>{PAYMENT_LABEL[o.paymentPreference]}</b>. Collected by your business, not online.</p>
               </div>
             </CardContent>
           </Card>

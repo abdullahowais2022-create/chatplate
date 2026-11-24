@@ -21,13 +21,13 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       <div className="relative hidden overflow-hidden bg-gradient-to-br from-brand-500 to-brand-700 lg:flex lg:flex-col lg:justify-center lg:px-16 text-white">
         <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/10" />
         <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-white/5" />
-        <h2 className="relative text-4xl font-bold leading-tight">Your restaurant&apos;s orders,<br />straight from WhatsApp.</h2>
-        <p className="relative mt-4 max-w-md text-lg text-white/85">Customers text or send a voice note in their own language. MenuTexter understands it, confirms the order and drops it into your dashboard.</p>
+        <h2 className="relative text-4xl font-bold leading-tight">Your orders,<br />straight from WhatsApp.</h2>
+        <p className="relative mt-4 max-w-md text-lg text-white/85">Customers text or send a voice note in their own language. TillText understands it, confirms the order and drops it into your dashboard.</p>
         <ul className="relative mt-10 space-y-4 text-white/90">
           {[
             [MessageCircle, "Text and voice-note ordering, 24/7"],
             [Languages, "Replies in the customer's language"],
-            [ClipboardCheck, "Only your real menu, prices and hours"],
+            [ClipboardCheck, "Only your real products, prices and hours"],
           ].map(([Icon, text], i) => {
             const I = Icon as typeof MessageCircle;
             return (
@@ -38,7 +38,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
             );
           })}
         </ul>
-        <p className="relative mt-12 text-sm text-white/70">No payment processing. Customers pay you directly, the way they always have.</p>
+        <p className="relative mt-12 text-sm text-white/70">For restaurants, shops, groceries, pharmacies and more. No payment processing: customers pay you directly.</p>
       </div>
     </div>
   );

@@ -27,7 +27,7 @@ export default async function OverviewPage() {
     <div className="mx-auto max-w-7xl">
       <PageHeader
         title={`Good ${greeting(s.timezone)}, ${s.name.split(" ")[0]}`}
-        description="Here's what's happening at your restaurant today."
+        description="Here's what's happening at your business today."
         actions={
           <>
             <Button variant="outline" asChild><Link href="/dashboard/menu"><UtensilsCrossed /> Menu</Link></Button>

@@ -68,7 +68,7 @@ export function ProfileForm({ settings, onSaved, submitLabel = "Save", readOnly 
         </label>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Restaurant name"><Input required value={f.name} onChange={(e) => set("name", e.target.value)} disabled={readOnly} /></Field>
+        <Field label="Business name"><Input required value={f.name} onChange={(e) => set("name", e.target.value)} disabled={readOnly} /></Field>
         <Field label="Phone"><Input value={f.phone} onChange={(e) => set("phone", e.target.value)} disabled={readOnly} placeholder="+1 555 0100" /></Field>
         <Field label="Address" className="sm:col-span-2" hint="Shared with customers for pickup orders."><Input value={f.address} onChange={(e) => set("address", e.target.value)} disabled={readOnly} /></Field>
         <Field label="Email"><Input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} disabled={readOnly} /></Field>
@@ -85,7 +85,7 @@ export function ProfileForm({ settings, onSaved, submitLabel = "Save", readOnly 
           <Field label="Longitude"><Input inputMode="decimal" value={f.longitude} onChange={(e) => set("longitude", e.target.value)} disabled={readOnly} /></Field>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">Coordinates are used for radius delivery zones. Tip: right-click your restaurant in Google Maps to copy them.</p>
+      <p className="text-xs text-muted-foreground">Coordinates are used for radius delivery zones. Tip: right-click your business in Google Maps to copy them.</p>
       {!readOnly && <Button type="submit" loading={busy}>{submitLabel}</Button>}
     </form>
   );
@@ -151,7 +151,7 @@ export function DeliveryForm({ settings, onSaved, submitLabel = "Save delivery &
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <SwitchRow label="Delivery" description="Customers can ask for delivery" checked={f.deliveryEnabled} onCheckedChange={(v) => setF({ ...f, deliveryEnabled: v })} disabled={readOnly} />
-        <SwitchRow label="Pickup" description="Customers can collect from the restaurant" checked={f.pickupEnabled} onCheckedChange={(v) => setF({ ...f, pickupEnabled: v })} disabled={readOnly} />
+        <SwitchRow label="Pickup" description="Customers can collect from your store" checked={f.pickupEnabled} onCheckedChange={(v) => setF({ ...f, pickupEnabled: v })} disabled={readOnly} />
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Field label={`Minimum order (${settings.currency})`}><Input type="number" min="0" step="0.01" value={f.minimumOrderAmount} onChange={(e) => setF({ ...f, minimumOrderAmount: e.target.value })} disabled={readOnly} /></Field>
@@ -204,7 +204,7 @@ export function PaymentForm({ settings, onSaved, submitLabel = "Save payment opt
   const { busy, save } = useSave(onSaved);
   return (
     <div className="space-y-4">
-      <div className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">MenuTexter never processes payments, sends payment links or asks for card details. It only records how the customer <b>prefers</b> to pay you.</div>
+      <div className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">TillText never processes payments, sends payment links or asks for card details. It only records how the customer <b>prefers</b> to pay you.</div>
       <div>
         <p className="mb-1.5 text-sm font-medium">Payment methods you accept</p>
         <div className="flex flex-wrap gap-2">

@@ -1,11 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 316 64" role="img" aria-label="MenuTexter">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 64" role="img" aria-label="TillText">
   <path d="M32 4C16.54 4 4 15.4 4 29.5c0 7.3 3.37 13.88 8.78 18.53L10.2 59.2a1 1 0 0 0 1.43 1.1l12.06-6.02A30.6 30.6 0 0 0 32 55c15.46 0 28-11.4 28-25.5S47.46 4 32 4Z" fill="#EE621A"/>
   <path d="M32 4C16.54 4 4 15.4 4 29.5c0 2.2.3 4.33.87 6.36C8.6 22.1 19.3 12 32 12s23.4 10.1 27.13 23.86c.57-2.03.87-4.16.87-6.36C60 15.4 47.46 4 32 4Z" fill="#FB8A3C" opacity=".55"/>
-  <rect x="18" y="13" width="28" height="33" rx="4.5" fill="#FFFFFF"/>
-  <path d="M25.5 20.5h13" stroke="#E35413" stroke-width="3.2" stroke-linecap="round"/>
-  <path d="M23.5 28h11M23.5 33.5h11M23.5 39h11" stroke="#FDAC74" stroke-width="2.6" stroke-linecap="round"/>
-  <circle cx="40" cy="28" r="1.7" fill="#E35413"/>
-  <circle cx="40" cy="33.5" r="1.7" fill="#E35413"/>
-  <circle cx="40" cy="39" r="1.7" fill="#E35413"/>
-  <text x="72" y="43" font-family="ui-rounded, 'SF Pro Rounded', 'Nunito', 'Segoe UI', system-ui, sans-serif" font-size="36" font-weight="800" letter-spacing="-1"><tspan fill="#1F1B16">menu</tspan><tspan fill="#E35413">texter</tspan></text>
+  <path d="M20 15a2.5 2.5 0 0 1 2.5-2.5h19A2.5 2.5 0 0 1 44 15v31l-3-2.2-3 2.2-3-2.2-3 2.2-3-2.2-3 2.2-3-2.2-3 2.2Z" fill="#FFFFFF"/>
+  <path d="M24.5 20h9M24.5 25.5h9M24.5 31h9" stroke="#FDAC74" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M37 20h2.5M37 25.5h2.5M37 31h2.5" stroke="#E35413" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M24.5 37.5h15" stroke="#E35413" stroke-width="3.2" stroke-linecap="round"/>
+  <text x="72" y="43" font-family="ui-rounded, 'SF Pro Rounded', 'Nunito', 'Segoe UI', system-ui, sans-serif" font-size="36" font-weight="800" letter-spacing="-1"><tspan fill="#1F1B16">till</tspan><tspan fill="#E35413">text</tspan></text>
 </svg>

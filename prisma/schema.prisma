@@ -1,4 +1,4 @@
-// MenuTexter data model.
+// TillText data model.
 // Every tenant-owned table carries `restaurantId` and is always queried with it (see src/server/auth).
 // Money is stored as Decimal(10,2) and always recomputed server-side from menu data.
 
