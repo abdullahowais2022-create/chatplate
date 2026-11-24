@@ -250,6 +250,11 @@ model WhatsAppAccount {
   connectionMethod   String         @default("manual")
   /// Two-step verification PIN set when TillText registers the number on the Cloud API (encrypted).
   registrationPinEnc String?
+  /// True when messages are sent with TillText's own permanent system-user token (META_SYSTEM_USER_TOKEN)
+  /// instead of the business's expiring Embedded Signup token.
+  usesPlatformToken  Boolean        @default(false)
+  /// When the stored (business) access token expires, if Meta told us. Null = doesn't expire.
+  tokenExpiresAt     DateTime?
   /// Public, unguessable path segment for this restaurant's webhook URL (not an internal id).
   webhookKey         String         @unique
   status             WhatsAppStatus @default(NOT_CONNECTED)

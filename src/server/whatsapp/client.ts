@@ -84,8 +84,9 @@ export async function graphFetch<T>(creds: WhatsAppCredentials, path: string, in
 
 export async function getCredentials(restaurantId: string): Promise<WhatsAppCredentials | null> {
   const acc = await db.whatsAppAccount.findUnique({ where: { restaurantId } });
-  if (!acc?.phoneNumberId || !acc.accessTokenEnc) return null;
-  const accessToken = decryptOrNull(acc.accessTokenEnc);
+  if (!acc?.phoneNumberId) return null;
+  const platform = acc.usesPlatformToken ? env().META_SYSTEM_USER_TOKEN : undefined;
+  const accessToken = platform ?? decryptOrNull(acc.accessTokenEnc);
   if (!accessToken) return null;
   return { phoneNumberId: acc.phoneNumberId, accessToken, wabaId: acc.wabaId };
 }

@@ -31,6 +31,7 @@ Meta only lets approved platforms ("Tech Providers") offer one-click signup, so 
    | `META_APP_SECRET` | Same page → App secret (click Show) |
    | `META_EMBEDDED_SIGNUP_CONFIG_ID` | The Configuration ID from step 4 |
    | `META_WEBHOOK_VERIFY_TOKEN` | The random text you chose in step 6 |
+   | `META_SYSTEM_USER_TOKEN` | A **Never**-expiring token of an **Admin** system user in TillText's own business portfolio (business.facebook.com → Users → System users → Generate token) with `whatsapp_business_management`, `whatsapp_business_messaging` and `business_management`. Meta's Embedded Signup template gives 60-day tokens; with this set, TillText assigns each connected WhatsApp account to its own system user so connections never expire. |
 
 Once these are set, **Settings → WhatsApp** and the onboarding wizard show the blue **Connect with Facebook** button instead of the manual form. Until Meta approves your app (steps 3 and 5), only people with a role on your Meta app (admins, developers, testers) can complete the popup, which is handy for testing.
 

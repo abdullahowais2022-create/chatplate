@@ -29,6 +29,9 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
     onChange?.(next);
   };
   const st = STATUS[s.status] ?? STATUS.NOT_CONNECTED!;
+  // Embedded Signup tokens can expire (60 days) when TillText's permanent token isn't set up.
+  const expiresAt = !s.usesPlatformToken && s.tokenExpiresAt ? new Date(s.tokenExpiresAt) : null;
+  const expiringSoon = expiresAt !== null && expiresAt.getTime() - Date.now() < 14 * 24 * 3600 * 1000;
 
   const run = async <T,>(key: string, fn: () => Promise<T>, ok?: string) => {
     setBusy(key);
@@ -63,10 +66,11 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
             Webhook {s.webhookVerifiedAt ? `verified ${timeAgo(s.webhookVerifiedAt)}` : "not verified yet"} · Last event {s.lastWebhookAt ? timeAgo(s.lastWebhookAt) : "never"}{s.lastTestAt ? ` · Test sent ${formatDateTime(s.lastTestAt)}` : ""}
           </p>
           {s.lastError && <p className="mt-1 text-xs text-destructive">{s.lastError}</p>}
+          {expiresAt && <p className={expiringSoon ? "mt-1 text-xs font-medium text-destructive" : "mt-1 text-xs text-muted-foreground"}>Connection {expiresAt.getTime() < Date.now() ? "expired" : "expires"} on {formatDateTime(expiresAt.toISOString())}. {expiringSoon ? "Reconnect below to keep the AI replying." : ""}</p>}
         </div>
       </div>
 
-      {s.embeddedSignup && s.status !== "CONNECTED" && <EmbeddedSignupButton config={s.embeddedSignup} onConnected={update} />}
+      {s.embeddedSignup && (s.status !== "CONNECTED" || expiringSoon) && <EmbeddedSignupButton config={s.embeddedSignup} onConnected={update} />}
       {!s.embeddedSignup && s.status !== "CONNECTED" && (
         <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
           One-click <b>Connect with Facebook</b> isn&apos;t switched on for this TillText server yet, so connect manually below. (Server admin: see &quot;One-click connect&quot; in docs/WHATSAPP_SETUP.md.)

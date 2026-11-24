@@ -56,6 +56,7 @@ export const PUT = route(async (req) => {
       ...(input.accessToken ? { accessTokenEnc: encrypt(input.accessToken) } : {}),
       ...(input.appSecret ? { appSecretEnc: encrypt(input.appSecret) } : {}),
       ...(pin ? { registrationPinEnc: encrypt(pin) } : {}),
+      ...(input.accessToken ? { usesPlatformToken: false, tokenExpiresAt: null } : {}),
       status,
       lastError,
     },

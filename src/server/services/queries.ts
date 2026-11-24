@@ -334,6 +334,8 @@ export async function getWhatsAppStatus(restaurantId: string, appUrl: string) {
     lastTestAt: acc.lastTestAt?.toISOString() ?? null,
     lastError: acc.lastError,
     connectionMethod: acc.connectionMethod,
+    usesPlatformToken: acc.usesPlatformToken,
+    tokenExpiresAt: acc.tokenExpiresAt?.toISOString() ?? null,
     /** Settings for the one-click "Connect WhatsApp" button, or null when the platform hasn't enabled it. */
     embeddedSignup: embeddedSignupConfig(),
   };
