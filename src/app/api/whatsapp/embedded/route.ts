@@ -15,6 +15,8 @@ const schema = z.object({
   phoneNumberId: z.string().regex(/^\d{5,30}$/, "Invalid phone number id").nullish(),
   /** The business keeps using the WhatsApp Business app on its phone (Meta "coexistence"). */
   existingApp: z.boolean().default(false),
+  /** The page the Facebook login ran on (Meta ties the code to it). */
+  pageUrl: z.string().url().max(500).nullish(),
 });
 
 /** Finishes Meta Embedded Signup: the browser sends the one-time code and the ids Meta returned. */

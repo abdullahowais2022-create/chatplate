@@ -127,7 +127,7 @@ export function EmbeddedSignupButton({ config, prefill, onConnected }: { config:
         return;
       }
       // If Meta's window didn't pass the ids back, the server finds them from the login.
-      const next = await api<WhatsAppStatusDTO & { warning?: string | null }>("/api/whatsapp/embedded", { body: { code, wabaId: ids.wabaId ?? null, phoneNumberId: ids.phoneNumberId ?? null, existingApp: mode === "app" } });
+      const next = await api<WhatsAppStatusDTO & { warning?: string | null }>("/api/whatsapp/embedded", { body: { code, wabaId: ids.wabaId ?? null, phoneNumberId: ids.phoneNumberId ?? null, existingApp: mode === "app", pageUrl: window.location.href } });
       onConnected(next);
       if (next.warning) toast.warning(next.warning);
       else toast.success(`WhatsApp connected${next.displayPhoneNumber ? `: ${next.displayPhoneNumber}` : ""}. Your AI assistant is live.`);

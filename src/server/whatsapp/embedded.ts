@@ -28,20 +28,57 @@ export function embeddedSignupConfig(): EmbeddedSignupConfig | null {
   return { appId: e.META_APP_ID, configId: e.META_EMBEDDED_SIGNUP_CONFIG_ID, graphVersion: e.META_GRAPH_API_VERSION };
 }
 
-async function exchangeCode(code: string): Promise<{ token: string; expiresAt: Date | null }> {
+async function exchangeOnce(code: string, redirectUri: string | null) {
   const e = env();
   const url = new URL(`https://graph.facebook.com/${e.META_GRAPH_API_VERSION}/oauth/access_token`);
   url.searchParams.set("client_id", e.META_APP_ID!);
   url.searchParams.set("client_secret", e.META_APP_SECRET!);
   url.searchParams.set("code", code);
+  if (redirectUri !== null) url.searchParams.set("redirect_uri", redirectUri);
   const res = await fetch(url, { signal: AbortSignal.timeout(15_000) }).catch(() => {
     throw new MetaApiError("Couldn't reach Facebook to finish the connection. Please try again in a moment.", 503);
   });
   const json = (await res.json().catch(() => ({}))) as { access_token?: string; expires_in?: number; error?: { message?: string; code?: number } };
-  if (!res.ok || !json.access_token) {
-    throw new MetaApiError(json.error?.message ? `Facebook login could not be completed: ${json.error.message}` : "Facebook login could not be completed. Please try again.", res.status || 400, json.error?.code);
+  return { res, json };
+}
+
+/**
+ * Swaps Meta's one-time code for an access token. Meta ties the code to the page the login ran on, and
+ * depending on how the popup was opened it expects no redirect_uri or that exact page address, so we try
+ * the likely variants (a code that fails a redirect check isn't used up).
+ */
+async function exchangeCode(code: string, pageUrl?: string | null): Promise<{ token: string; expiresAt: Date | null }> {
+  const candidates: (string | null)[] = [null];
+  if (pageUrl) {
+    try {
+      const u = new URL(pageUrl);
+      const appOrigin = new URL(env().APP_URL).origin;
+      if (u.origin === appOrigin) candidates.push(u.href.split("#")[0]!, `${u.origin}${u.pathname}`, `${u.origin}/`);
+    } catch {
+      /* ignore a malformed page URL */
+    }
   }
-  return { token: json.access_token, expiresAt: json.expires_in ? new Date(Date.now() + json.expires_in * 1000) : null };
+  let last: { message?: string; code?: number } | undefined;
+  let status = 400;
+  for (const redirectUri of [...new Set(candidates)]) {
+    const { res, json } = await exchangeOnce(code, redirectUri);
+    if (res.ok && json.access_token) {
+      return { token: json.access_token, expiresAt: json.expires_in ? new Date(Date.now() + json.expires_in * 1000) : null };
+    }
+    last = json.error;
+    status = res.status || 400;
+    if (!/redirect_uri/i.test(json.error?.message ?? "")) break; // a different problem: don't keep trying
+  }
+  const redirectProblem = /redirect_uri/i.test(last?.message ?? "");
+  throw new MetaApiError(
+    redirectProblem
+      ? "Facebook login worked, but Meta rejected the page address. In your Meta app → Facebook Login for Business → Settings, add https://tilltext.vercel.app/dashboard/settings and https://tilltext.vercel.app/onboarding to Valid OAuth Redirect URIs, save, then press Connect again."
+      : last?.message
+        ? `Facebook login could not be completed: ${last.message}`
+        : "Facebook login could not be completed. Please try again.",
+    status,
+    last?.code,
+  );
 }
 
 /**
@@ -96,11 +133,11 @@ async function discoverSharedNumber(accessToken: string): Promise<{ wabaId: stri
 
 export async function connectWithEmbeddedSignup(
   restaurantId: string,
-  request: { code: string; wabaId?: string | null; phoneNumberId?: string | null; existingApp?: boolean },
+  request: { code: string; wabaId?: string | null; phoneNumberId?: string | null; existingApp?: boolean; pageUrl?: string | null },
 ): Promise<{ displayPhoneNumber: string | null; verifiedName: string | null; warning: string | null }> {
   if (!embeddedSignupConfig()) throw new MetaApiError("One-click WhatsApp connection isn't set up on this TillText server yet.", 400);
 
-  const { token: accessToken, expiresAt } = await exchangeCode(request.code);
+  const { token: accessToken, expiresAt } = await exchangeCode(request.code, request.pageUrl);
   const ids = request.wabaId && request.phoneNumberId ? { wabaId: request.wabaId, phoneNumberId: request.phoneNumberId } : await discoverSharedNumber(accessToken);
   const input = { ...ids, existingApp: request.existingApp };
 
