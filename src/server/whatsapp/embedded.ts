@@ -48,7 +48,9 @@ async function exchangeOnce(code: string, redirectUri: string | null) {
  * the likely variants (a code that fails a redirect check isn't used up).
  */
 async function exchangeCode(code: string, pageUrl?: string | null): Promise<{ token: string; expiresAt: Date | null }> {
-  const candidates: (string | null)[] = [null];
+  // Codes from Facebook's JavaScript SDK pop-up are bound to an *empty* redirect_uri (sent but blank),
+  // which isn't the same as leaving the parameter out. Try that first.
+  const candidates: (string | null)[] = ["", null];
   if (pageUrl) {
     try {
       const u = new URL(pageUrl);
@@ -70,6 +72,9 @@ async function exchangeCode(code: string, pageUrl?: string | null): Promise<{ to
     if (!/redirect_uri/i.test(json.error?.message ?? "")) break; // a different problem: don't keep trying
   }
   const redirectProblem = /redirect_uri/i.test(last?.message ?? "");
+  if (/app'?s domains|App Domains/i.test(last?.message ?? "")) {
+    throw new MetaApiError("Facebook login worked, but tilltext.vercel.app isn't listed as your app's domain. In your Meta app → App settings → Basic, add tilltext.vercel.app to App domains, save, then press Connect again.", status, last?.code);
+  }
   throw new MetaApiError(
     redirectProblem
       ? "Facebook login worked, but Meta rejected the page address. In your Meta app → Facebook Login for Business → Settings, add https://tilltext.vercel.app/dashboard/settings and https://tilltext.vercel.app/onboarding to Valid OAuth Redirect URIs, save, then press Connect again."
