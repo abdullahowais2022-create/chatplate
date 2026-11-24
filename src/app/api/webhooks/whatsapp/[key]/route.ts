@@ -44,6 +44,7 @@ export async function POST(req: Request, { params }: Ctx) {
   const appSecret = decryptOrNull(account.appSecretEnc);
   if (!appSecret || !verifyMetaSignature(raw, req.headers.get("x-hub-signature-256"), appSecret)) {
     console.warn("[webhook] invalid signature", { account: account.id });
+    await db.whatsAppAccount.update({ where: { id: account.id }, data: { lastError: "Meta is sending messages, but they were rejected: the App secret saved in TillText doesn't match your Meta app (App settings → Basic). Paste it again and press Save & verify." } }).catch(() => undefined);
     return new NextResponse("Invalid signature", { status: 401 });
   }
 

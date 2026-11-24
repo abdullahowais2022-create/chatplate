@@ -34,7 +34,12 @@ export async function ingestEvents(account: WhatsAppAccount, events: NormalizedE
   }
   await db.whatsAppAccount.update({
     where: { id: account.id },
-    data: { lastWebhookAt: new Date(), ...(account.status === "PENDING_VERIFICATION" ? { status: "CONNECTED", lastError: null } : {}) },
+    data: {
+      lastWebhookAt: new Date(),
+      ...(account.status === "PENDING_VERIFICATION" ? { status: "CONNECTED", lastError: null } : {}),
+      // A delivery got through, so any earlier "rejected" warning is resolved.
+      ...(account.lastError?.startsWith("Meta is sending messages") ? { lastError: null } : {}),
+    },
   });
   return { received: events.length, queued };
 }

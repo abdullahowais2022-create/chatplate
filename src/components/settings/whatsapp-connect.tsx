@@ -106,6 +106,8 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
       </section>
       </ManualSetup>
 
+      {(s.hasAccessToken || s.usesPlatformToken) && <ConnectionCheck />}
+
       <section className="space-y-3">
         <h3 className="font-semibold">Send a test message</h3>
         <p className="text-sm text-muted-foreground">Sends Meta&apos;s approved <code>hello_world</code> template to any WhatsApp number.</p>
@@ -135,5 +137,47 @@ function ManualSetup({ open, title, children }: { open: boolean; title: string; 
       </summary>
       <div className="mt-4 space-y-6">{children}</div>
     </details>
+  );
+}
+
+type Check = { label: string; ok: boolean; detail: string; fixed?: boolean };
+
+/** Asks Meta what's wrong (or right) with this connection, and fixes what it safely can. */
+function ConnectionCheck() {
+  const [checks, setChecks] = useState<Check[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true);
+    try {
+      setChecks((await api<{ checks: Check[] }>("/api/whatsapp/diagnose", { method: "POST" })).checks);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 className="font-semibold">Check connection</h3>
+          <p className="text-sm text-muted-foreground">Asks Meta whether messages can reach TillText, and fixes what it can.</p>
+        </div>
+        <Button variant="outline" loading={busy} onClick={run}><RefreshCw /> Check now</Button>
+      </div>
+      {checks && (
+        <ul className="divide-y rounded-lg border">
+          {checks.map((c) => (
+            <li key={c.label} className="flex gap-3 px-3 py-2.5 text-sm">
+              {c.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" /> : <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />}
+              <span>
+                <span className="font-medium">{c.label}{c.fixed ? " (fixed)" : ""}</span>
+                <span className="block text-muted-foreground">{c.detail}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

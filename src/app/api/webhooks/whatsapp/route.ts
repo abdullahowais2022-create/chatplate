@@ -7,6 +7,7 @@ import { normalizeWebhook, type NormalizedEvent } from "@/server/whatsapp/payloa
 import { ingestEvents } from "@/server/whatsapp/ingest";
 import { rateLimit } from "@/server/ratelimit";
 import { clientIp } from "@/server/http";
+import { noteWebhookRejection } from "@/server/whatsapp/diagnostics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,12 +34,15 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   if (!(await rateLimit("webhook", clientIp(req), 3000, "1 m"))) return new NextResponse("Too many requests", { status: 429 });
   const secret = env().META_APP_SECRET;
-  if (!secret) return new NextResponse("Not configured", { status: 404 });
-
   const raw = await req.text();
   if (raw.length > MAX_BODY) return new NextResponse("Payload too large", { status: 413 });
+  if (!secret) {
+    await noteWebhookRejection(raw, "Meta is sending messages, but META_APP_SECRET isn't set in Vercel. Add your Meta app's App secret there and redeploy.");
+    return new NextResponse("Not configured", { status: 404 });
+  }
   if (!verifyMetaSignature(raw, req.headers.get("x-hub-signature-256"), secret)) {
     console.warn("[webhook:platform] invalid signature");
+    await noteWebhookRejection(raw, "Meta is sending messages, but they were rejected: META_APP_SECRET in Vercel doesn't match your Meta app's App secret (App settings → Basic). Copy it again, save, redeploy.");
     return new NextResponse("Invalid signature", { status: 401 });
   }
   let body: unknown;
