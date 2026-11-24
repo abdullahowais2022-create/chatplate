@@ -626,6 +626,10 @@ export function baseLang(lang: string | null | undefined): string {
   return (lang ?? "en").toLowerCase().split(/[-_]/)[0] || "en";
 }
 
+export function hasRuntime(lang: string | null | undefined) {
+  return runtime.has(baseLang(lang));
+}
+
 export function hasBuiltin(lang: string | null | undefined) {
   return baseLang(lang) in DICTS;
 }

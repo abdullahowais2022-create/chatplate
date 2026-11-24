@@ -9,8 +9,9 @@ import { Field } from "@/components/ui/label";
 import { SwitchRow, Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
 import { uploadImage } from "@/lib/image";
+import { LanguageMultiSelect, LanguageSelect } from "@/components/language-select";
 import { BUSINESS_TYPES } from "@/lib/business";
-import { DAYS, LANGUAGES, PAYMENT_LABEL } from "@/lib/constants";
+import { DAYS, PAYMENT_LABEL } from "@/lib/constants";
 import { PAYMENT_METHODS } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
 
@@ -254,21 +255,14 @@ export function AiForm({ settings, onSaved, submitLabel = "Save AI settings", re
             <option value="friendly">Friendly & warm</option><option value="professional">Professional & concise</option><option value="playful">Playful (light emoji)</option><option value="formal">Formal</option>
           </NativeSelect>
         </Field>
-        <Field label="Default language">
-          <NativeSelect value={f.defaultLanguage} onChange={(e) => setF({ ...f, defaultLanguage: e.target.value })} disabled={readOnly}>
-            {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}
-          </NativeSelect>
+        <Field label="Your team's language" hint="Used when the customer's language is unclear. Customer messages are translated into it in the inbox.">
+          <LanguageSelect value={f.defaultLanguage} onChange={(e) => setF({ ...f, defaultLanguage: e.target.value })} disabled={readOnly} />
         </Field>
       </div>
       <div className="space-y-2">
-        <SwitchRow label="Reply in any language the customer uses" description="Recommended. Otherwise the AI replies only in the languages selected below and uses the default for others." checked={f.anyLanguage} onCheckedChange={(v) => setF({ ...f, anyLanguage: v })} disabled={readOnly} />
+        <SwitchRow label="Reply in any language the customer uses" description="Recommended. The AI understands every language and dialect (also voice notes) and replies in the customer's own language. Turn off to limit replies to the languages below." checked={f.anyLanguage} onCheckedChange={(v) => setF({ ...f, anyLanguage: v })} disabled={readOnly} />
         {!f.anyLanguage && (
-          <div className="flex flex-wrap gap-1.5">
-            {LANGUAGES.map((l) => {
-              const on = f.supportedLanguages.includes(l.code) || l.code === f.defaultLanguage;
-              return <button type="button" key={l.code} disabled={readOnly} onClick={() => setF({ ...f, supportedLanguages: on ? f.supportedLanguages.filter((x) => x !== l.code) : [...f.supportedLanguages, l.code] })} className={cn("rounded-full border px-2.5 py-1 text-xs", on ? "border-primary bg-brand-50 text-brand-800" : "text-muted-foreground")}>{l.name}</button>;
-            })}
-          </div>
+          <LanguageMultiSelect value={f.supportedLanguages} locked={[f.defaultLanguage]} onChange={(v) => setF({ ...f, supportedLanguages: v })} disabled={readOnly} />
         )}
       </div>
       <Field label="Greeting message (optional)" hint="Sent the first time someone writes. Leave empty to use the built-in greeting, which is automatically translated.">

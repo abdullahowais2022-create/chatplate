@@ -392,6 +392,10 @@ model Message {
   /// AI troubleshooting data: extraction, validation, decision, model used.
   aiData         Json?
   language       String?
+  /// For customer messages: the text translated into the team's language. For staff replies that
+  /// were auto-translated: what the staff member originally typed.
+  translation         String?
+  translationLanguage String?
   status         MessageStatus    @default(RECEIVED)
   error          String?
   staffUserId    String?
@@ -712,4 +716,13 @@ model StoredFile {
   createdAt   DateTime @default(now())
 
   @@index([bucket])
+}
+
+/// AI translations of the bot's fixed message templates, one row per language, shared by all
+/// businesses. Saves a translation call on every cold start for languages without built-in text.
+model TranslationCache {
+  language  String   @id
+  labels    Json
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
 }

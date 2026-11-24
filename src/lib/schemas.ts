@@ -157,7 +157,7 @@ export const orderUpdateSchema = z.object({
 
 export const cancelOrderSchema = z.object({ reason: optionalText(300), notifyCustomer: z.boolean().default(true) });
 
-export const replySchema = z.object({ text: z.string().trim().min(1).max(4000) });
+export const replySchema = z.object({ text: z.string().trim().min(1).max(4000), translate: z.boolean().default(false) });
 
 export const customerUpdateSchema = z.object({
   name: optionalText(100).optional(),

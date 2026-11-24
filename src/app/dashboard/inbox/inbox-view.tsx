@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, ArrowLeft, Bot, Check, CheckCheck, Clock, Hand, Headphones, Info, MapPin, MessagesSquare, RotateCcw, Search, Send, Sparkles, UserRound, Wand2, XCircle } from "lucide-react";
+import { Languages, AlertTriangle, ArrowLeft, Bot, Check, CheckCheck, Clock, Hand, Headphones, Info, MapPin, MessagesSquare, RotateCcw, Search, Send, Sparkles, UserRound, Wand2, XCircle } from "lucide-react";
 import type { ConversationDetail, ConversationListItem } from "@/server/services/queries";
 import { useLive } from "@/components/dashboard/live";
 import { Avatar, EmptyState, Skeleton } from "@/components/ui/misc";
@@ -99,6 +99,7 @@ function ConversationPane({ id, onBack }: { id: string; onBack: () => void }) {
   const [conv, setConv] = useState<ConversationDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const [translateReply, setTranslateReply] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
   const lastCount = useRef(0);
@@ -138,7 +139,7 @@ function ConversationPane({ id, onBack }: { id: string; onBack: () => void }) {
     if (!text.trim()) return;
     setBusy("send");
     try {
-      await api(`/api/conversations/${id}/messages`, { body: { text } });
+      await api(`/api/conversations/${id}/messages`, { body: { text, translate: canTranslate && translateReply } });
       setText("");
       await load();
       router.refresh();
@@ -166,6 +167,8 @@ function ConversationPane({ id, onBack }: { id: string; onBack: () => void }) {
   if (!conv) return <div className="space-y-3 p-6">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className={cn("h-14", i % 2 ? "w-2/3" : "ml-auto w-1/2")} />)}</div>;
 
   const human = conv.mode === "HUMAN";
+  const customerLang = conv.language ?? conv.customer.language;
+  const canTranslate = Boolean(customerLang) && base(customerLang) !== base(conv.staffLanguage);
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b px-3 py-2.5 sm:px-4">
@@ -205,7 +208,7 @@ function ConversationPane({ id, onBack }: { id: string; onBack: () => void }) {
       )}
 
       <div className="chat-bg flex-1 space-y-2 overflow-y-auto px-3 py-4 sm:px-6">
-        {conv.messages.map((m) => <Bubble key={m.id} m={m} />)}
+        {conv.messages.map((m) => <Bubble key={m.id} m={m} staffLanguage={conv.staffLanguage} />)}
         <div ref={bottom} />
       </div>
 
@@ -227,6 +230,12 @@ function ConversationPane({ id, onBack }: { id: string; onBack: () => void }) {
             )}
           </div>
         )}
+        {canTranslate && (
+          <label className="mb-2 flex w-fit cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+            <input type="checkbox" className="h-3.5 w-3.5 accent-[hsl(var(--primary))]" checked={translateReply} onChange={(e) => setTranslateReply(e.target.checked)} />
+            <Languages className="h-3.5 w-3.5" /> Write in {languageName(conv.staffLanguage)}, send in {languageName(customerLang)} (auto-translate)
+          </label>
+        )}
         <div className="flex items-end gap-2">
           <Textarea
             value={text}
@@ -245,9 +254,26 @@ function ConversationPane({ id, onBack }: { id: string; onBack: () => void }) {
 
 type Msg = ConversationDetail["messages"][number];
 
-function Bubble({ m }: { m: Msg }) {
+function Bubble({ m, staffLanguage }: { m: Msg; staffLanguage: string }) {
   const out = m.direction === "OUTBOUND";
   const [showAi, setShowAi] = useState(false);
+  const [tr, setTr] = useState<{ text: string | null; busy: boolean; hidden: boolean }>({ text: m.translation, busy: false, hidden: false });
+  useEffect(() => {
+    if (m.translation) setTr((x) => ({ ...x, text: m.translation }));
+  }, [m.translation]);
+  const sourceText = m.voiceNote?.transcript ?? m.body;
+  const foreign = Boolean(sourceText) && (!m.language || base(m.language) !== base(staffLanguage));
+  const staffOriginal = out && m.sender === "STAFF" && m.translation;
+  const translate = async () => {
+    setTr((x) => ({ ...x, busy: true }));
+    try {
+      const r = await api<{ translation: string }>(`/api/messages/${m.id}/translate`, { method: "POST" });
+      setTr({ text: r.translation, busy: false, hidden: false });
+    } catch (e) {
+      toast.error((e as Error).message);
+      setTr((x) => ({ ...x, busy: false }));
+    }
+  };
   const ai = m.ai as { extraction?: { intent?: string; confidence?: number; language?: string; missing_information?: string[] }; decision?: { action?: string }; engine?: string; errors?: string[] } | null;
   return (
     <div className={cn("flex", out ? "justify-end" : "justify-start")}>
@@ -271,11 +297,24 @@ function Bubble({ m }: { m: Msg }) {
         )}
         {(m.voiceNote?.transcript ?? m.body) && <p className="whitespace-pre-wrap break-words" dir="auto">{m.voiceNote?.transcript ?? m.body}</p>}
         {!m.body && !m.voiceNote && !m.location && <p className="italic text-muted-foreground">[{m.type.toLowerCase()}]</p>}
+        {tr.text && !tr.hidden && (
+          <div className="mt-1.5 border-t border-black/10 pt-1.5 dark:border-white/10">
+            <p className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              <Languages className="h-3 w-3" /> {staffOriginal ? `You wrote (${languageName(m.translationLanguage)})` : `Translated from ${languageName(m.language)}`}
+            </p>
+            <p className="whitespace-pre-wrap break-words text-[13px] text-foreground/80" dir="auto">{tr.text}</p>
+          </div>
+        )}
         {m.requestsLocation && <p className="mt-2 flex items-center gap-1 text-[11px] text-brand-800"><MapPin className="h-3 w-3" /> Asked to share location</p>}
         {m.buttons.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">{m.buttons.map((b) => <span key={b.id} className="rounded-full border border-brand-300 bg-white/70 px-2 py-0.5 text-[11px] text-brand-800">{b.title}</span>)}</div>
         )}
         <div className="mt-1 flex items-center justify-end gap-1.5 text-[10px] text-muted-foreground">
+          {!staffOriginal && foreign && (tr.text ? (
+            <button onClick={() => setTr((x) => ({ ...x, hidden: !x.hidden }))} className="rounded px-1 font-medium hover:bg-muted">{tr.hidden ? "Show translation" : "Hide translation"}</button>
+          ) : (
+            <button onClick={translate} disabled={tr.busy} className="flex items-center gap-0.5 rounded px-1 font-medium text-brand-800 hover:bg-muted disabled:opacity-60"><Languages className="h-3 w-3" /> {tr.busy ? "Translating…" : "Translate"}</button>
+          ))}
           {!out && ai?.extraction && (
             <button onClick={() => setShowAi((s) => !s)} className="rounded bg-brand-100 px-1 font-medium text-brand-800 hover:bg-brand-200">AI</button>
           )}
@@ -313,3 +352,5 @@ function Ticks({ status, error }: { status: string; error: string | null }) {
       return null;
   }
 }
+
+const base = (l: string | null | undefined) => (l ?? "").toLowerCase().split(/[-_]/)[0];

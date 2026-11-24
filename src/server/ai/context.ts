@@ -34,6 +34,7 @@ export async function loadPipelineContext(conversationId: string, now = new Date
     }));
   const c = conv.customer;
   return {
+    restaurantId: conv.restaurantId,
     restaurant: facts,
     menu,
     state: conv.state,

@@ -11,6 +11,7 @@ import type { InboundWaMessage } from "../whatsapp/payload";
 import { transcribe } from "../ai/transcribe";
 import { loadPipelineContext } from "../ai/context";
 import { runPipeline, type PipelineOutput } from "../ai/pipeline";
+import { baseLang } from "../ai/i18n";
 import type { InboundInput } from "../ai/types";
 import { t } from "../ai/i18n";
 import { detectLanguage } from "../ai/heuristic";
@@ -202,14 +203,14 @@ export async function handleInbound(env: InboundEnvelope): Promise<PipelineOutpu
           ...(restaurant.aiEnabled ? {} : { needsHuman: true, needsHumanReason: "AI replies are turned off" }),
         },
       });
-      await db.message.update({ where: { id: message.id }, data: { aiData: out ? (debugData(out) as Prisma.InputJsonValue) : undefined } });
+      await db.message.update({ where: { id: message.id }, data: { aiData: out ? (debugData(out) as Prisma.InputJsonValue) : undefined, ...(out ? staffTranslation(out, restaurant.defaultLanguage) : {}) } });
       await bumpLive(env.restaurantId);
       return out;
     }
 
     const ctx = await loadPipelineContext(conversation.id);
     const out = await runPipeline(ctx, input);
-    await db.message.update({ where: { id: message.id }, data: { aiData: debugData(out) as Prisma.InputJsonValue, language: out.language } });
+    await db.message.update({ where: { id: message.id }, data: { aiData: debugData(out) as Prisma.InputJsonValue, ...staffTranslation(out, restaurant.defaultLanguage) } });
     await applyPipelineResult(conversation.id, out);
     return out;
   });
@@ -301,4 +302,11 @@ async function flag(conversationId: string, restaurantId: string, reason: string
   await db.conversation.update({ where: { id: conversationId }, data: { needsHuman: true, needsHumanReason: reason } });
   await audit({ restaurantId, actorType: "AI", action: "conversation.flagged", entityType: "Conversation", entityId: conversationId, after: { reason } });
   await notify({ restaurantId, type: /complaint/i.test(reason) ? "COMPLAINT" : "NEEDS_HUMAN", title: "Conversation needs attention", body: reason, link: `/dashboard/inbox?c=${conversationId}` });
+}
+
+/** The customer's message in the team's language, for the inbox (only when it was in another language). */
+function staffTranslation(out: PipelineOutput, staffLanguage: string) {
+  const tr = out.raw.staff_translation?.trim();
+  if (!tr || baseLang(out.language) === baseLang(staffLanguage)) return { language: out.language };
+  return { language: out.language, translation: tr.slice(0, 4000), translationLanguage: baseLang(staffLanguage) };
 }

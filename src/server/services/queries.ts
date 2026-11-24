@@ -52,6 +52,7 @@ export async function getConversation(restaurantId: string, id: string) {
     where: { id, restaurantId },
     include: {
       customer: true,
+      restaurant: { select: { defaultLanguage: true } },
       assignedTo: { select: { id: true, name: true } },
       messages: { orderBy: { createdAt: "asc" }, take: 300, include: { voiceNote: true, staffUser: { select: { name: true } } } },
       orders: { orderBy: { createdAt: "desc" }, take: 5, select: { id: true, number: true, status: true, total: true, createdAt: true } },
@@ -63,6 +64,8 @@ export async function getConversation(restaurantId: string, id: string) {
     mode: c.mode,
     state: c.state,
     language: c.language,
+    /** The team's language: customer messages are translated into it, staff replies out of it. */
+    staffLanguage: c.restaurant.defaultLanguage,
     needsHuman: c.needsHuman,
     needsHumanReason: c.needsHumanReason,
     aiSuggestion: c.aiSuggestion,
@@ -84,6 +87,9 @@ export async function getConversation(restaurantId: string, id: string) {
       sender: m.sender,
       type: m.type,
       body: m.body,
+      language: m.language,
+      translation: m.translation,
+      translationLanguage: m.translationLanguage,
       status: m.status,
       error: m.error,
       createdAt: m.createdAt.toISOString(),

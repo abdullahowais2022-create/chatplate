@@ -172,6 +172,8 @@ export type RawExtraction = {
   missing_information: string[];
   requires_human: boolean;
   requires_human_reason: string | null;
+  /** The message translated into the team's language (AI engine only). */
+  staff_translation?: string | null;
 };
 
 /** The structured output described in the product spec (prices filled in from the database). */
@@ -222,6 +224,8 @@ export type InboundInput = {
 export type HistoryTurn = { role: "customer" | "assistant" | "staff"; text: string };
 
 export type PipelineContext = {
+  /** Set for real businesses (lets the pipeline save AI translations of product names). */
+  restaurantId?: string;
   restaurant: RestaurantFacts;
   menu: MenuSnapshot;
   state: "IDLE" | "ORDERING" | "AWAITING_CONFIRMATION";

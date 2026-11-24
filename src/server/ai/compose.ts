@@ -2,7 +2,9 @@ import "server-only";
 import { businessInfo } from "@/lib/business";
 import type { Decision, PipelineContext } from "./types";
 import { jsonCompletion } from "./openai";
-import { LABEL_KEYS_FOR_TRANSLATION, englishDict, hasBuiltin, registerLanguage } from "./i18n";
+import { LABEL_KEYS_FOR_TRANSLATION, baseLang, englishDict, hasBuiltin, hasRuntime, registerLanguage } from "./i18n";
+import { db } from "../db";
+import { languageName } from "@/lib/languages";
 
 const TONES: Record<string, string> = {
   friendly: "warm, friendly and upbeat",
@@ -51,36 +53,58 @@ export async function composeReply(ctx: PipelineContext, decision: Decision, lan
 }
 
 const translating = new Map<string, Promise<void>>();
+const LABELS_VERSION = 1;
+const placeholders = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort().join(",");
 
-/** For languages without a built-in dictionary, machine-translate the fixed labels once per process. */
+/**
+ * Any language works: for languages without built-in text, the bot's fixed messages are translated by
+ * the AI once, checked (placeholders must survive), saved in the database for every business and
+ * every server instance, and loaded from there afterwards.
+ */
 export async function ensureLanguageLabels(lang: string) {
-  if (hasBuiltin(lang)) return;
-  if (!translating.has(lang)) {
-    const keys = LABEL_KEYS_FOR_TRANSLATION;
-    const source = Object.fromEntries(keys.map((k) => [k, englishDict[k]]));
-    const job = jsonCompletion<{ entries: { key: string; value: string }[] }>({
-      system: "Translate UI strings for a local business's WhatsApp ordering bot. Keep {placeholders}, emojis and *formatting* exactly. Return every key.",
-      user: `Target language (ISO 639-1): ${lang}\n\n${JSON.stringify(source)}`,
-      schemaName: "labels",
-      schema: {
-        type: "object",
-        additionalProperties: false,
-        required: ["entries"],
-        properties: {
-          entries: {
-            type: "array",
-            items: { type: "object", additionalProperties: false, required: ["key", "value"], properties: { key: { type: "string" }, value: { type: "string" } } },
+  const l = baseLang(lang);
+  if (hasBuiltin(l) || hasRuntime(l)) return;
+  if (!translating.has(l)) {
+    const job = (async () => {
+      const cached = await db.translationCache.findUnique({ where: { language: l } }).catch(() => null);
+      if (cached && cached.version === LABELS_VERSION) {
+        registerLanguage(l, cached.labels as Record<string, string>);
+        return;
+      }
+      const keys = LABEL_KEYS_FOR_TRANSLATION;
+      const source = Object.fromEntries(keys.map((k) => [k, englishDict[k]]));
+      const res = await jsonCompletion<{ entries: { key: string; value: string }[] }>({
+        system: `Translate UI strings for a local business's WhatsApp ordering bot into ${languageName(l)} (${l}). Natural, friendly, the way locals text. Keep {placeholders}, emojis and *formatting* exactly. Return every key.`,
+        user: JSON.stringify(source),
+        schemaName: "labels",
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          required: ["entries"],
+          properties: {
+            entries: {
+              type: "array",
+              items: { type: "object", additionalProperties: false, required: ["key", "value"], properties: { key: { type: "string" }, value: { type: "string" } } },
+            },
           },
         },
-      },
-      maxTokens: 6000,
-    })
-      .then((res) => registerLanguage(lang, Object.fromEntries(res.entries.filter((e) => keys.includes(e.key as never)).map((e) => [e.key, e.value]))))
-      .catch((err) => {
-        translating.delete(lang);
-        console.warn("[ai] label translation failed", lang, (err as Error).message);
+        maxTokens: 8000,
       });
-    translating.set(lang, job);
+      // Drop any entry that lost or invented a {placeholder}; those keys fall back to English.
+      const labels = Object.fromEntries(
+        res.entries
+          .filter((e) => keys.includes(e.key as never) && e.value.trim() && placeholders(e.value) === placeholders(englishDict[e.key as keyof typeof englishDict]))
+          .map((e) => [e.key, e.value]),
+      );
+      registerLanguage(l, labels);
+      await db.translationCache
+        .upsert({ where: { language: l }, create: { language: l, labels, version: LABELS_VERSION }, update: { labels, version: LABELS_VERSION } })
+        .catch((err) => console.warn("[ai] could not save label translations", l, (err as Error).message));
+    })().catch((err) => {
+      translating.delete(l);
+      console.warn("[ai] label translation failed", l, (err as Error).message);
+    });
+    translating.set(l, job);
   }
-  await translating.get(lang);
+  await translating.get(l);
 }

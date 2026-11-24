@@ -14,6 +14,7 @@ export const POST = route(async (req) => {
   const input = await parseJson(req, playgroundSchema);
   const { facts, menu } = await loadRestaurantContext(s.restaurantId);
   const ctx: PipelineContext = {
+    restaurantId: s.restaurantId,
     restaurant: facts,
     menu,
     state: input.state,

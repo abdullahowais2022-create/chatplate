@@ -288,6 +288,21 @@ async function main() {
   await makeOrder(1, [{ name: "Chicken Shawarma Sandwich", qty: 3, addons: ["Extra garlic sauce"] }, { name: "Fries", qty: 1, variant: "Large" }, { name: "Coca-Cola", qty: 3 }], "PREPARING", minutesAgo(18), "DELIVERY", "CASH");
   await makeOrder(2, [{ name: "Pepperoni Pizza", variant: "Large", qty: 2, removals: ["onions"] }, { name: "Coca-Cola", qty: 1, variant: "1.5L Bottle" }], "NEW", minutesAgo(3), "PICKUP", "CARD_AT_PICKUP");
 
+  // What the AI's staff translation would look like for the demo's foreign-language messages.
+  const DEMO_TRANSLATIONS: Record<string, string> = {
+    "Hola! Quiero 2 pizzas de pepperoni grandes, una sin cebolla, y una Coca-Cola grande": "Hi! I want 2 large pepperoni pizzas, one without onion, and a large Coca-Cola",
+    Recoger: "Pickup",
+    "Tarjeta al recoger": "Card at pickup",
+    "Confirmar pedido": "Confirm order",
+    "مرحبا، بدي تلات ساندويشات شاورما دجاج مع ثومية زيادة، وبطاطا كبيرة، وتلات كولا. توصيل لو سمحت": "Hi, I'd like three chicken shawarma sandwiches with extra garlic sauce, a large fries and three colas. Delivery please",
+    "ايوه نفس العنوان": "Yes, same address",
+    "تأكيد الطلب": "Confirm order",
+    "السلام علیکم، کل والا آرڈر بہت ٹھنڈا آیا تھا اور فرائز بھی نہیں تھے": "Hello, yesterday's order arrived very cold and the fries were missing too",
+    "Merhaba, 2 tavuk döner dürüm istiyorum": "Hello, I'd like 2 chicken doner wraps",
+    "Namaste! Do falafel wrap aur ek greek salad, pickup karungi": "Hello! Two falafel wraps and one Greek salad, I'll pick it up",
+    "Bonjour, vous êtes ouverts jusqu'à quelle heure ce soir ?": "Hello, until what time are you open tonight?",
+  };
+
   // Conversations with realistic history
   type M = { from: "c" | "ai" | "staff"; text: string; ago: number; voice?: string; type?: "TEXT" | "AUDIO" | "INTERACTIVE"; buttons?: string[] };
   async function thread(ci: number, msgs: M[], extra: Prisma.ConversationUpdateInput = {}) {
@@ -298,6 +313,7 @@ async function main() {
           restaurantId: r.id, conversationId: cu.conversation.id, direction: m.from === "c" ? "INBOUND" : "OUTBOUND",
           sender: m.from === "c" ? "CUSTOMER" : m.from === "ai" ? "AI" : "STAFF", type: m.voice ? "AUDIO" : (m.type ?? "TEXT"),
           body: m.voice ?? m.text, status: m.from === "c" ? "RECEIVED" : "READ", createdAt: minutesAgo(m.ago), language: cu.lang,
+          ...(m.from === "c" && DEMO_TRANSLATIONS[m.voice ?? m.text] ? { translation: DEMO_TRANSLATIONS[m.voice ?? m.text], translationLanguage: "en" } : {}),
           staffUserId: m.from === "staff" ? owner.id : null,
           payload: m.buttons ? { kind: "buttons", text: m.text, buttons: m.buttons.map((b, i) => ({ id: `cp:${i}`, title: b })) } : undefined,
         },

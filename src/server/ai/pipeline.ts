@@ -7,6 +7,8 @@ import { composeReply, ensureLanguageLabels } from "./compose";
 import { hasOpenAI } from "../env";
 import { isOpenAt } from "./hours";
 import { linesToRaw } from "./validate";
+import { translateMenuNames } from "./translate";
+import { baseLang } from "./i18n";
 
 export type PipelineOutput = {
   engine: "openai" | "heuristic";
@@ -52,7 +54,13 @@ export async function runPipeline(ctx: PipelineContext, input: InboundInput, opt
 
   // 2. Language
   const language = chooseLanguage(ctx, raw.language, text);
-  if (useLlm) await ensureLanguageLabels(language).catch(() => undefined);
+  if (useLlm) {
+    const needsNames = ctx.restaurantId && baseLang(language) !== baseLang(ctx.restaurant.defaultLanguage);
+    await Promise.all([
+      ensureLanguageLabels(language).catch(() => undefined),
+      needsNames ? translateMenuNames(ctx.restaurantId!, ctx.menu, language).catch((err) => errors.push(`menu names: ${(err as Error).message}`)) : undefined,
+    ]);
+  }
 
   // 3. Decide (validation happens inside)
   const decision = decide(ctx, raw, input, language);

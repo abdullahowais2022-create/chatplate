@@ -3,11 +3,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input, NativeSelect, Textarea } from "@/components/ui/input";
+import { Input, Textarea } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { LANGUAGES } from "@/lib/constants";
+import { LanguageSelect } from "@/components/language-select";
 import { cn } from "@/lib/utils";
 
 type C = { id: string; name: string | null; tags: string[]; notes: string | null; savedAddress: string | null; preferredLanguage: string | null };
@@ -52,10 +52,7 @@ export function CustomerEditor({ customer, canEdit }: { customer: C; canEdit: bo
           </div>
         </div>
         <Field label="Preferred language">
-          <NativeSelect disabled={!canEdit} value={f.preferredLanguage ?? ""} onChange={(e) => setF({ ...f, preferredLanguage: e.target.value })}>
-            <option value="">Auto-detect</option>
-            {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}
-          </NativeSelect>
+          <LanguageSelect disabled={!canEdit} value={f.preferredLanguage ?? ""} placeholder="Auto-detect" onChange={(e) => setF({ ...f, preferredLanguage: e.target.value })} />
         </Field>
         <Field label="Saved delivery address" hint="Offered automatically on the next delivery order."><Textarea disabled={!canEdit} rows={2} value={f.savedAddress ?? ""} onChange={(e) => setF({ ...f, savedAddress: e.target.value })} /></Field>
         <Field label="Internal notes"><Textarea disabled={!canEdit} rows={3} value={f.notes ?? ""} onChange={(e) => setF({ ...f, notes: e.target.value })} placeholder="e.g. Prefers extra napkins" /></Field>
