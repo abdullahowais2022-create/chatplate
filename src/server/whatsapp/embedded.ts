@@ -69,6 +69,7 @@ async function exchangeCode(code: string, pageUrl?: string | null): Promise<{ to
     }
     last = json.error;
     status = res.status || 400;
+    console.warn("[embedded] code exchange failed", { redirectUri: redirectUri === null ? "(omitted)" : redirectUri || "(empty)", code: json.error?.code, message: json.error?.message });
     if (!/redirect_uri/i.test(json.error?.message ?? "")) break; // a different problem: don't keep trying
   }
   const redirectProblem = /redirect_uri/i.test(last?.message ?? "");
@@ -136,14 +137,79 @@ async function discoverSharedNumber(accessToken: string): Promise<{ wabaId: stri
   return { wabaId: candidates[0]!.wabaId, phoneNumberId: candidates[0]!.num.id };
 }
 
+const digits = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "");
+const sameNumber = (a: string, b: string) => {
+  const x = digits(a);
+  const y = digits(b);
+  return x.length >= 6 && y.length >= 6 && (x.endsWith(y.slice(-9)) || y.endsWith(x.slice(-9)));
+};
+
+/**
+ * Without the business's own token: find the just-connected WhatsApp account and number with TillText's
+ * permanent system-user token, by matching the number the owner typed. Works when Meta has shared the
+ * account with TillText's business (Embedded Signup does this) and the system user can see it.
+ */
+async function findNumberWithPlatformToken(phone: string, ids: { wabaId?: string | null; phoneNumberId?: string | null }): Promise<{ wabaId: string; phoneNumberId: string } | null> {
+  const e = env();
+  const token = e.META_SYSTEM_USER_TOKEN;
+  if (!token) return null;
+  const creds = (wabaId: string) => ({ accessToken: token, phoneNumberId: "", wabaId });
+  if (ids.wabaId && ids.phoneNumberId) return { wabaId: ids.wabaId, phoneNumberId: ids.phoneNumberId };
+
+  const wabaIds = new Set<string>();
+  // WhatsApp accounts the system user can already see.
+  const dbg = await fetch(`https://graph.facebook.com/${e.META_GRAPH_API_VERSION}/debug_token?input_token=${encodeURIComponent(token)}&access_token=${encodeURIComponent(`${e.META_APP_ID}|${e.META_APP_SECRET}`)}`, { signal: AbortSignal.timeout(15_000) })
+    .then((r) => r.json() as Promise<{ data?: { granular_scopes?: { scope: string; target_ids?: string[] }[] } }>)
+    .catch(() => null);
+  for (const g of dbg?.data?.granular_scopes ?? []) if (g.scope.startsWith("whatsapp_business")) for (const id of g.target_ids ?? []) wabaIds.add(id);
+  // Accounts owned by, or shared with, TillText's business (needs business_management on the token).
+  const owner = await graphFetch<{ owner_business?: { id: string } }>({ accessToken: `${e.META_APP_ID}|${e.META_APP_SECRET}`, phoneNumberId: "", wabaId: null }, `/${e.META_APP_ID}?fields=owner_business`).catch(() => null);
+  if (owner?.owner_business?.id) {
+    for (const edge of ["owned_whatsapp_business_accounts", "client_whatsapp_business_accounts"]) {
+      const list = await graphFetch<{ data?: { id: string }[] }>(creds(""), `/${owner.owner_business.id}/${edge}?fields=id&limit=100`).catch(() => null);
+      for (const w of list?.data ?? []) wabaIds.add(w.id);
+    }
+  }
+  for (const wabaId of wabaIds) {
+    const nums = await graphFetch<{ data?: { id: string; display_phone_number?: string }[] }>(creds(wabaId), `/${wabaId}/phone_numbers?fields=id,display_phone_number`).catch(() => null);
+    const hit = nums?.data?.find((n) => sameNumber(n.display_phone_number ?? "", phone));
+    if (hit) return { wabaId, phoneNumberId: hit.id };
+  }
+  return null;
+}
+
 export async function connectWithEmbeddedSignup(
   restaurantId: string,
-  request: { code: string; wabaId?: string | null; phoneNumberId?: string | null; existingApp?: boolean; pageUrl?: string | null },
+  request: { code: string; wabaId?: string | null; phoneNumberId?: string | null; existingApp?: boolean; pageUrl?: string | null; phone?: string | null },
 ): Promise<{ displayPhoneNumber: string | null; verifiedName: string | null; warning: string | null }> {
   if (!embeddedSignupConfig()) throw new MetaApiError("One-click WhatsApp connection isn't set up on this TillText server yet.", 400);
 
-  const { token: accessToken, expiresAt } = await exchangeCode(request.code, request.pageUrl);
-  const ids = request.wabaId && request.phoneNumberId ? { wabaId: request.wabaId, phoneNumberId: request.phoneNumberId } : await discoverSharedNumber(accessToken);
+  let accessToken: string;
+  let expiresAt: Date | null = null;
+  let ids: { wabaId: string; phoneNumberId: string };
+  let platformOnly = false;
+  try {
+    ({ token: accessToken, expiresAt } = await exchangeCode(request.code, request.pageUrl));
+    ids = request.wabaId && request.phoneNumberId ? { wabaId: request.wabaId, phoneNumberId: request.phoneNumberId } : await discoverSharedNumber(accessToken);
+  } catch (err) {
+    // Meta sometimes refuses to swap the one-time code. TillText's own permanent token can still
+    // finish the connection, using the number the owner typed to find the right account.
+    const found = env().META_SYSTEM_USER_TOKEN && request.phone ? await findNumberWithPlatformToken(request.phone, request) : null;
+    if (!found) {
+      if (env().META_SYSTEM_USER_TOKEN && request.phone) {
+        throw new MetaApiError(
+          "Facebook finished, but TillText can't see your WhatsApp number yet. In business.facebook.com → Settings → System users → TillText → Assign assets → WhatsApp accounts, give TillText Full control of your WhatsApp account, then press Connect again.",
+          400,
+        );
+      }
+      throw err;
+    }
+    console.warn("[embedded] code exchange failed; connected with the platform token instead", (err as Error).message);
+    accessToken = env().META_SYSTEM_USER_TOKEN!;
+    ids = found;
+    platformOnly = true;
+    await attachPlatformSystemUser(found.wabaId, found.phoneNumberId); // make sure it can manage it
+  }
   const input = { ...ids, existingApp: request.existingApp };
 
   const conflict = await db.whatsAppAccount.findFirst({ where: { phoneNumberId: input.phoneNumberId, NOT: { restaurantId } } });
@@ -174,7 +240,7 @@ export async function connectWithEmbeddedSignup(
   }
 
   // Prefer TillText's permanent token so the connection never expires.
-  const usesPlatformToken = await attachPlatformSystemUser(input.wabaId, input.phoneNumberId);
+  const usesPlatformToken = platformOnly || (await attachPlatformSystemUser(input.wabaId, input.phoneNumberId));
 
   await db.whatsAppAccount.update({
     where: { restaurantId },
@@ -184,7 +250,7 @@ export async function connectWithEmbeddedSignup(
       wabaId: input.wabaId,
       phoneNumberId: input.phoneNumberId,
       displayPhoneNumber: info.display_phone_number ?? null,
-      accessTokenEnc: encrypt(accessToken),
+      accessTokenEnc: platformOnly ? null : encrypt(accessToken),
       appSecretEnc: null, // signatures are checked with the platform app secret instead
       registrationPinEnc: encrypt(pin),
       connectionMethod: input.existingApp ? "coexistence" : "embedded",

@@ -17,6 +17,8 @@ const schema = z.object({
   existingApp: z.boolean().default(false),
   /** The page the Facebook login ran on (Meta ties the code to it). */
   pageUrl: z.string().url().max(500).nullish(),
+  /** The number the owner typed, used to find the account if Meta won't swap the code. */
+  phone: z.string().max(30).regex(/^[\d\s+()-]*$/).nullish(),
 });
 
 /** Finishes Meta Embedded Signup: the browser sends the one-time code and the ids Meta returned. */
