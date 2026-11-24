@@ -40,6 +40,18 @@ const status = z
   })
   .passthrough();
 
+/** A message the business sent itself from the WhatsApp Business app on its phone (coexistence). */
+const echo = z
+  .object({
+    from: z.string(),
+    to: z.string(),
+    id: z.string(),
+    timestamp: z.string(),
+    type: z.string(),
+    text: z.object({ body: z.string() }).optional(),
+  })
+  .passthrough();
+
 export const webhookSchema = z.object({
   object: z.string(),
   entry: z.array(
@@ -54,6 +66,7 @@ export const webhookSchema = z.object({
               contacts: z.array(contact).optional(),
               messages: z.array(inboundMessage).optional(),
               statuses: z.array(status).optional(),
+              message_echoes: z.array(echo).optional(),
             })
             .passthrough(),
         }),
@@ -64,10 +77,12 @@ export const webhookSchema = z.object({
 
 export type InboundWaMessage = z.infer<typeof inboundMessage>;
 export type WaStatus = z.infer<typeof status>;
+export type WaEcho = z.infer<typeof echo>;
 
 export type NormalizedEvent =
   | { kind: "message"; externalId: string; phoneNumberId: string; message: InboundWaMessage; profileName: string | null }
-  | { kind: "status"; externalId: string; phoneNumberId: string; status: WaStatus };
+  | { kind: "status"; externalId: string; phoneNumberId: string; status: WaStatus }
+  | { kind: "echo"; externalId: string; phoneNumberId: string; echo: WaEcho };
 
 /** Flattens a webhook payload into individually idempotent events. */
 export function normalizeWebhook(body: unknown): NormalizedEvent[] {
@@ -76,9 +91,13 @@ export function normalizeWebhook(body: unknown): NormalizedEvent[] {
   const out: NormalizedEvent[] = [];
   for (const entry of parsed.data.entry) {
     for (const change of entry.changes) {
-      if (change.field !== "messages") continue;
       const v = change.value;
       const phoneNumberId = v.metadata?.phone_number_id ?? "";
+      if (change.field === "smb_message_echoes") {
+        for (const e of v.message_echoes ?? []) out.push({ kind: "echo", externalId: `echo:${e.id}`, phoneNumberId, echo: e });
+        continue;
+      }
+      if (change.field !== "messages") continue;
       for (const m of v.messages ?? []) {
         const contactName = v.contacts?.find((c) => c.wa_id === m.from)?.profile?.name ?? null;
         out.push({ kind: "message", externalId: `msg:${m.id}`, phoneNumberId, message: m, profileName: contactName });

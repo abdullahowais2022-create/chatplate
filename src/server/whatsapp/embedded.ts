@@ -48,7 +48,7 @@ type PhoneInfo = { display_phone_number?: string; verified_name?: string; platfo
 
 export async function connectWithEmbeddedSignup(
   restaurantId: string,
-  input: { code: string; wabaId: string; phoneNumberId: string },
+  input: { code: string; wabaId: string; phoneNumberId: string; existingApp?: boolean },
 ): Promise<{ displayPhoneNumber: string | null; verifiedName: string | null; warning: string | null }> {
   if (!embeddedSignupConfig()) throw new MetaApiError("One-click WhatsApp connection isn't set up on this TillText server yet.", 400);
 
@@ -65,15 +65,18 @@ export async function connectWithEmbeddedSignup(
   await graphFetch(creds, `/${input.wabaId}/subscribed_apps`, { method: "POST" });
 
   // Register the number for the Cloud API. Already-registered numbers report CLOUD_API and are fine.
+  // Numbers that stay on the WhatsApp Business app (coexistence) are already registered by Meta.
   const existing = await db.whatsAppAccount.findUnique({ where: { restaurantId }, select: { registrationPinEnc: true } });
   const pin = decryptOrNull(existing?.registrationPinEnc) ?? String(randomInt(0, 1_000_000)).padStart(6, "0");
   let warning: string | null = null;
-  try {
-    await graphFetch(creds, `/${input.phoneNumberId}/register`, { method: "POST", body: JSON.stringify({ messaging_product: "whatsapp", pin }) });
-  } catch (err) {
-    const after = await graphFetch<PhoneInfo>(creds, `/${input.phoneNumberId}?fields=platform_type`).catch(() => null);
-    if (after?.platform_type !== "CLOUD_API") {
-      warning = `WhatsApp is linked, but the number couldn't be activated yet: ${err instanceof MetaApiError ? err.message : explainMetaError()}. Try "Connect" again in a few minutes.`;
+  if (!input.existingApp) {
+    try {
+      await graphFetch(creds, `/${input.phoneNumberId}/register`, { method: "POST", body: JSON.stringify({ messaging_product: "whatsapp", pin }) });
+    } catch (err) {
+      const after = await graphFetch<PhoneInfo>(creds, `/${input.phoneNumberId}?fields=platform_type`).catch(() => null);
+      if (after?.platform_type !== "CLOUD_API") {
+        warning = `WhatsApp is linked, but the number couldn't be activated yet: ${err instanceof MetaApiError ? err.message : explainMetaError()}. Try "Connect" again in a few minutes.`;
+      }
     }
   }
 
@@ -86,7 +89,7 @@ export async function connectWithEmbeddedSignup(
       accessTokenEnc: encrypt(accessToken),
       appSecretEnc: null, // signatures are checked with the platform app secret instead
       registrationPinEnc: encrypt(pin),
-      connectionMethod: "embedded",
+      connectionMethod: input.existingApp ? "coexistence" : "embedded",
       status: warning ? "ERROR" : "CONNECTED",
       webhookVerifiedAt: new Date(),
       lastError: warning,

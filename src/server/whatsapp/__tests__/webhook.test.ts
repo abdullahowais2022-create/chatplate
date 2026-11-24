@@ -55,3 +55,13 @@ describe("webhook normalisation", () => {
     expect(normalizeWebhook(null)).toEqual([]);
   });
 });
+
+describe("phone app echoes (coexistence)", () => {
+  it("turns replies sent from the WhatsApp Business app into echo events", () => {
+    const events = normalizeWebhook({
+      object: "whatsapp_business_account",
+      entry: [{ id: "1", changes: [{ field: "smb_message_echoes", value: { messaging_product: "whatsapp", metadata: { phone_number_id: "555" }, message_echoes: [{ from: "15550001", to: "15557770000", id: "wamid.ECHO1", timestamp: "1764000000", type: "text", text: { body: "Ready in 10 min!" } }] } }] }],
+    });
+    expect(events).toEqual([expect.objectContaining({ kind: "echo", externalId: "echo:wamid.ECHO1", phoneNumberId: "555" })]);
+  });
+});

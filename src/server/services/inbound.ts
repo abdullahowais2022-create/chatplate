@@ -7,7 +7,7 @@ import { rateLimit } from "../ratelimit";
 import { audit } from "../audit";
 import { putPrivate } from "../storage";
 import { downloadMedia, getCredentials, markRead } from "../whatsapp/client";
-import type { InboundWaMessage } from "../whatsapp/payload";
+import type { InboundWaMessage, WaEcho } from "../whatsapp/payload";
 import { transcribe } from "../ai/transcribe";
 import { loadPipelineContext } from "../ai/context";
 import { runPipeline, type PipelineOutput } from "../ai/pipeline";
@@ -310,4 +310,31 @@ function staffTranslation(out: PipelineOutput, staffLanguage: string) {
   const tr = out.raw.staff_translation?.trim();
   if (!tr || baseLang(out.language) === baseLang(staffLanguage)) return { language: out.language };
   return { language: out.language, translation: tr.slice(0, 4000), translationLanguage: baseLang(staffLanguage) };
+}
+
+/**
+ * The business replied to a customer from the WhatsApp Business app on its phone (coexistence).
+ * Show it in the inbox and let staff handle that chat, so the AI doesn't answer on top of them.
+ */
+export async function recordPhoneAppReply(restaurantId: string, e: WaEcho) {
+  if (await db.message.findUnique({ where: { waMessageId: e.id }, select: { id: true } })) return;
+  const customer = await db.customer.findUnique({ where: { restaurantId_phoneHash: { restaurantId, phoneHash: hashPhone(e.to) } } });
+  if (!customer) return; // a chat TillText has never seen; nothing to show
+  const conversation = await db.conversation.findUnique({ where: { restaurantId_customerId: { restaurantId, customerId: customer.id } } });
+  if (!conversation) return;
+  const body = e.text?.body ?? `[${e.type} sent from the WhatsApp Business app]`;
+  const at = new Date(Number(e.timestamp) * 1000 || Date.now());
+  try {
+    await db.message.create({
+      data: { restaurantId, conversationId: conversation.id, direction: "OUTBOUND", sender: "STAFF", type: "TEXT", waMessageId: e.id, body, payload: { source: "phone_app" } as Prisma.InputJsonValue, status: "SENT", sentAt: at, createdAt: at },
+    });
+  } catch (err) {
+    if ((err as { code?: string }).code === "P2002") return;
+    throw err;
+  }
+  await db.conversation.update({
+    where: { id: conversation.id },
+    data: { mode: "HUMAN", needsHuman: false, aiSuggestion: null, unreadCount: 0, lastMessageAt: at, lastMessagePreview: body.slice(0, 140) },
+  });
+  await bumpLive(restaurantId);
 }

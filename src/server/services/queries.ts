@@ -93,7 +93,7 @@ export async function getConversation(restaurantId: string, id: string) {
       status: m.status,
       error: m.error,
       createdAt: m.createdAt.toISOString(),
-      staffName: m.staffUser?.name ?? null,
+      staffName: m.staffUser?.name ?? (m.payload && typeof m.payload === "object" && (m.payload as { source?: string }).source === "phone_app" ? "From the phone app" : null),
       buttons: m.payload && typeof m.payload === "object" && "buttons" in m.payload ? ((m.payload as { buttons: { id: string; title: string }[] }).buttons ?? []).map((b) => ({ id: b.id, title: b.title })) : [],
       requestsLocation: Boolean(m.payload && typeof m.payload === "object" && (m.payload as { kind?: string }).kind === "location_request"),
       location:

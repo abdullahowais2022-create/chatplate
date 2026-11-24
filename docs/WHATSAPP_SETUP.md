@@ -22,7 +22,7 @@ Meta only lets approved platforms ("Tech Providers") offer one-click signup, so 
 6. **Webhook (one URL for all businesses).** WhatsApp → Configuration → Webhook → Edit:
    - Callback URL: `https://YOUR-DOMAIN/api/webhooks/whatsapp`
    - Verify token: any long random text. Put the same text in `META_WEBHOOK_VERIFY_TOKEN` (step 7). Set the variable and redeploy *before* you click **Verify and save**.
-   - Subscribe to the **messages** field.
+   - Subscribe to the **messages** and **smb_message_echoes** fields (the second shows replies a business sends from its phone app).
 7. **Add these to Vercel** (Project → Settings → Environment Variables), then redeploy:
 
    | Name | Where to find it |
@@ -33,6 +33,8 @@ Meta only lets approved platforms ("Tech Providers") offer one-click signup, so 
    | `META_WEBHOOK_VERIFY_TOKEN` | The random text you chose in step 6 |
 
 Once these are set, **Settings → WhatsApp** and the onboarding wizard show the blue **Connect with Facebook** button instead of the manual form. Until Meta approves your app (steps 3 and 5), only people with a role on your Meta app (admins, developers, testers) can complete the popup, which is handy for testing.
+
+**Keep your WhatsApp Business app (coexistence).** In the connect card the business chooses between "My number already uses the WhatsApp Business app" and "A new number". With the first, Meta's popup shows a QR code that the owner scans with the WhatsApp Business app. The number then works in both places: the owner keeps chatting on the phone, TillText's AI answers, and anything the owner sends from the phone appears in the TillText inbox and hands that chat to staff so the AI doesn't reply twice. It's Meta's own official feature, so there is no ban risk. Meta's limits apply: the phone app must stay updated and be opened at least every couple of weeks, and some features (for example groups and disappearing messages) aren't shared. Coexistence isn't available in every country; check Meta's current list.
 
 What TillText does after the popup closes: it swaps Meta's one-time code for a long-lived business token, confirms that token really controls the chosen number, subscribes your app to that business's webhooks, registers the number on the Cloud API with a random two-step PIN, and stores the token and PIN encrypted. Webhooks for every connected business arrive at the single URL from step 6, are checked against `META_APP_SECRET`, and are routed to the right business by phone number.
 

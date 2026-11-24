@@ -4,7 +4,7 @@ import { db } from "../db";
 import { enqueue } from "../queue";
 import { bumpLive } from "../live";
 import { normalizeWebhook, type NormalizedEvent, type WaStatus } from "./payload";
-import { envelopeFromWa, handleInbound } from "../services/inbound";
+import { envelopeFromWa, handleInbound, recordPhoneAppReply } from "../services/inbound";
 import { explainMetaError } from "./client";
 
 /**
@@ -47,6 +47,7 @@ export async function processWebhookEvent(eventId: string) {
     const e = ev.payload as unknown as NormalizedEvent;
     if (e.kind === "message") await handleInbound(envelopeFromWa(ev.restaurantId, e.message, e.profileName));
     else if (e.kind === "status") await applyStatus(ev.restaurantId, e.status);
+    else if (e.kind === "echo") await recordPhoneAppReply(ev.restaurantId, e.echo);
     await db.webhookEvent.update({ where: { id: ev.id }, data: { status: "PROCESSED", processedAt: new Date(), error: null } });
   } catch (err) {
     await db.webhookEvent.update({ where: { id: ev.id }, data: { status: "FAILED", error: (err as Error).message.slice(0, 1000) } });
