@@ -4,7 +4,7 @@ import { route, ok, parseJson, badRequest } from "@/server/http";
 import { requireApiSession } from "@/server/auth/session";
 import { simulatorSchema } from "@/lib/schemas";
 import { handleInbound } from "@/server/services/inbound";
-import { enforceRateLimit } from "@/server/ratelimit";
+import { enforceAiQuota, enforceRateLimit } from "@/server/ratelimit";
 import { db } from "@/server/db";
 import { hashPhone } from "@/server/crypto";
 
@@ -15,6 +15,7 @@ import { hashPhone } from "@/server/crypto";
 export const POST = route(async (req) => {
   const s = await requireApiSession("playground:use");
   await enforceRateLimit("simulator", s.userId, 30, "1 m");
+  await enforceAiQuota(s.restaurantId);
   const input = await parseJson(req, simulatorSchema);
   if (!input.text && !input.buttonId && !input.location) throw badRequest("Send text, a button or a location");
   const phone = `sim-${input.customer.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}`;

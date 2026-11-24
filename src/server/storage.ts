@@ -19,10 +19,14 @@ function safeKey(key: string) {
   return key;
 }
 
+/** Largest single file kept in the database (bigger files need Supabase Storage). */
+const MAX_DB_FILE_BYTES = 10 * 1024 * 1024;
+
 async function upload(bucket: string, key: string, data: Buffer, contentType: string) {
   const k = safeKey(key);
   const sb = supabase();
   if (!sb) {
+    if (data.length > MAX_DB_FILE_BYTES) throw new Error("File too large to store without Supabase Storage");
     const row = { bucket, contentType, size: data.length, data: new Uint8Array(data) };
     await db.storedFile.upsert({ where: { key: `${bucket}/${k}` }, create: { key: `${bucket}/${k}`, ...row }, update: row });
     return;
@@ -67,4 +71,13 @@ export async function putPublic(key: string, data: Buffer, contentType: string):
 /** Reads a public asset stored in the database (served by /api/media/public/...). */
 export async function getStoredPublic(key: string) {
   return readFromDb(env().SUPABASE_PUBLIC_BUCKET, key);
+}
+
+/** True when files go to the database (no Supabase configured). */
+export const usesDatabaseStorage = () => !supabase();
+
+/** Bytes stored in the database for one business's public files (logos, product photos). */
+export async function publicBytesUsed(restaurantId: string): Promise<number> {
+  const r = await db.storedFile.aggregate({ where: { key: { startsWith: `${env().SUPABASE_PUBLIC_BUCKET}/${safeKey(restaurantId)}/` } }, _sum: { size: true } });
+  return r._sum.size ?? 0;
 }

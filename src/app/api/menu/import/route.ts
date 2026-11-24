@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { route, ok, parseJson, clientIp } from "@/server/http";
 import { requireApiSession } from "@/server/auth/session";
-import { enforceRateLimit } from "@/server/ratelimit";
+import { enforceAiQuota, enforceRateLimit } from "@/server/ratelimit";
 import { db } from "@/server/db";
 import { applyCatalog, catalogDraftSchema, draftCatalog } from "@/server/ai/catalog-import";
 
@@ -19,9 +19,10 @@ const schema = z.discriminatedUnion("mode", [
 /** "Set up with AI": preview a catalogue read from text/photo, then apply the reviewed version. */
 export const POST = route(async (req) => {
   const s = await requireApiSession("menu:write");
-  const input = await parseJson(req, schema);
+  const input = await parseJson(req, schema, { maxBytes: 4 * 1024 * 1024 });
   if (input.mode === "preview") {
     await enforceRateLimit("menu-ai-import", s.restaurantId, 20, "1 h");
+    await enforceAiQuota(s.restaurantId);
     const r = await db.restaurant.findUniqueOrThrow({ where: { id: s.restaurantId }, select: { name: true, businessType: true, currency: true } });
     const draft = await draftCatalog({ text: input.text, image: input.image, businessType: r.businessType, businessName: r.name, currency: r.currency });
     return ok({ draft });

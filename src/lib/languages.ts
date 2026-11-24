@@ -51,3 +51,8 @@ export function languageName(code?: string | null): string {
   }
   return code.toUpperCase();
 }
+
+/** True for real ISO 639-1 codes. Used to stop made-up codes from triggering paid AI translations. */
+export function isKnownLanguage(code: string | null | undefined): boolean {
+  return Boolean(code && NAMES[code.toLowerCase().split(/[-_]/)[0]!]);
+}

@@ -4,7 +4,7 @@ import type { Decision, PipelineContext } from "./types";
 import { jsonCompletion } from "./openai";
 import { LABEL_KEYS_FOR_TRANSLATION, baseLang, englishDict, hasBuiltin, hasRuntime, registerLanguage } from "./i18n";
 import { db } from "../db";
-import { languageName } from "@/lib/languages";
+import { isKnownLanguage, languageName } from "@/lib/languages";
 
 const TONES: Record<string, string> = {
   friendly: "warm, friendly and upbeat",
@@ -63,7 +63,7 @@ const placeholders = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort().join(",")
  */
 export async function ensureLanguageLabels(lang: string) {
   const l = baseLang(lang);
-  if (hasBuiltin(l) || hasRuntime(l)) return;
+  if (hasBuiltin(l) || hasRuntime(l) || !isKnownLanguage(l)) return;
   if (!translating.has(l)) {
     const job = (async () => {
       const cached = await db.translationCache.findUnique({ where: { language: l } }).catch(() => null);

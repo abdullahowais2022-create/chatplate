@@ -8,6 +8,9 @@ const i18n = z.record(z.string().min(2).max(8), z.string().max(500)).default({})
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM (24h)");
 const optionalText = (max: number) => z.string().trim().max(max).nullish().transform((v) => (v ? v : null));
 
+/** Image links: our own uploads (/api/media/public/...) or an https URL. Blocks javascript:, data: etc. */
+const imageUrl = optionalText(500).refine((v) => v == null || v === "" || /^\/api\/media\/public\/[\w./-]+$/.test(v) || /^https:\/\/[^\s"'<>]+$/i.test(v), "Use an uploaded image or an https:// link");
+
 export const PAYMENT_METHODS = ["CASH", "CARD_ON_DELIVERY", "CARD_AT_PICKUP", "BANK_TRANSFER", "PAY_AT_RESTAURANT"] as const;
 export const ORDER_STATUSES = ["NEW", "CONFIRMED", "PREPARING", "READY", "OUT_FOR_DELIVERY", "COMPLETED", "CANCELLED"] as const;
 export const ROLES = ["OWNER", "MANAGER", "STAFF"] as const;
@@ -29,7 +32,7 @@ export const changePasswordSchema = z.object({ currentPassword: z.string().min(1
 export const profileSchema = z.object({
   name: z.string().trim().min(2).max(100),
   businessType: z.enum(BUSINESS_TYPE_VALUES).optional(),
-  logoUrl: optionalText(500),
+  logoUrl: imageUrl,
   address: optionalText(300),
   phone: optionalText(40),
   email: z.string().trim().email().nullish().or(z.literal("")).transform((v) => v || null),
@@ -131,7 +134,7 @@ export const menuItemSchema = z.object({
   description: optionalText(600),
   descriptionI18n: i18n,
   price: money,
-  imageUrl: optionalText(500),
+  imageUrl: imageUrl,
   isAvailable: z.boolean().default(true),
   isSoldOut: z.boolean().default(false),
   dietaryTags: z.array(z.string().max(30)).max(10).default([]),

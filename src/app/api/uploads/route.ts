@@ -1,10 +1,11 @@
 import { route, ok, badRequest } from "@/server/http";
 import { requireApiSession } from "@/server/auth/session";
-import { putPublic } from "@/server/storage";
+import { publicBytesUsed, putPublic, usesDatabaseStorage } from "@/server/storage";
 import { randomToken } from "@/server/crypto";
 import { enforceRateLimit } from "@/server/ratelimit";
 
 const MAX = 2 * 1024 * 1024;
+const MAX_TOTAL_PER_BUSINESS = 100 * 1024 * 1024;
 
 function sniff(buf: Buffer): { ext: string; type: string } | null {
   if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return { ext: "png", type: "image/png" };
@@ -24,6 +25,9 @@ export const POST = route(async (req) => {
   const buf = Buffer.from(await file.arrayBuffer());
   const kind = sniff(buf);
   if (!kind) throw badRequest("Only PNG, JPEG or WebP images are allowed");
+  if (usesDatabaseStorage() && (await publicBytesUsed(s.restaurantId)) + buf.length > MAX_TOTAL_PER_BUSINESS) {
+    throw badRequest("Your image storage is full (100 MB). Remove unused product photos or connect Supabase Storage.");
+  }
   const url = await putPublic(`${s.restaurantId}/${randomToken(12)}.${kind.ext}`, buf, kind.type);
   return ok({ url }, { status: 201 });
 });

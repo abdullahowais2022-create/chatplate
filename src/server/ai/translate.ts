@@ -5,7 +5,7 @@ import { jsonCompletion } from "./openai";
 import { hasOpenAI } from "../env";
 import { baseLang } from "./i18n";
 import type { MenuSnapshot } from "./types";
-import { languageName } from "@/lib/languages";
+import { isKnownLanguage, languageName } from "@/lib/languages";
 
 /**
  * AI translation for any language in the world.
@@ -61,7 +61,7 @@ export async function translateMenuNames(restaurantId: string, menu: MenuSnapsho
     for (const v of it.variants) add({ kind: "variant", id: v.id, name: v.name }, v.nameI18n);
     for (const a of it.addons) add({ kind: "addon", id: a.id, name: a.name }, a.nameI18n);
   }
-  if (!refs.length || !hasOpenAI()) return;
+  if (!refs.length || !hasOpenAI() || !isKnownLanguage(l)) return;
 
   const batch = refs.slice(0, 300);
   const res = await jsonCompletion<{ names: { ref: string; translation: string }[] }>({

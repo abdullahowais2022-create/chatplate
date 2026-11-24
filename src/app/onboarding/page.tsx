@@ -16,5 +16,8 @@ export default async function OnboardingPage() {
     getWhatsAppStatus(s.restaurantId, env().APP_URL),
     db.menuItem.count({ where: { restaurantId: s.restaurantId, deletedAt: null } }),
   ]);
-  return <Wizard settings={settings} whatsapp={whatsapp!} menuCount={menuCount} canManageWhatsApp={can(s.role, "whatsapp:manage")} />;
+  const canManageWhatsApp = can(s.role, "whatsapp:manage");
+  // Managers can run the wizard but must not receive the WhatsApp webhook secrets.
+  const wa = canManageWhatsApp ? whatsapp! : { ...whatsapp!, verifyToken: "", webhookUrl: "" };
+  return <Wizard settings={settings} whatsapp={wa} menuCount={menuCount} canManageWhatsApp={canManageWhatsApp} />;
 }

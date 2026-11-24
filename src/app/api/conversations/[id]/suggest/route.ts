@@ -3,7 +3,7 @@ import { requireApiSession } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { loadPipelineContext } from "@/server/ai/context";
 import { runPipeline } from "@/server/ai/pipeline";
-import { enforceRateLimit } from "@/server/ratelimit";
+import { enforceAiQuota, enforceRateLimit } from "@/server/ratelimit";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -11,6 +11,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export const POST = route<Ctx>(async (_req, { params }) => {
   const s = await requireApiSession("inbox:reply");
   await enforceRateLimit("suggest", s.userId, 30, "1 m");
+  await enforceAiQuota(s.restaurantId);
   const { id } = await params;
   const conv = await db.conversation.findFirst({ where: { id, restaurantId: s.restaurantId } });
   if (!conv) throw notFound("Conversation not found");

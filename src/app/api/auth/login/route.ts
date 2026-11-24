@@ -23,5 +23,5 @@ export const POST = route(async (req) => {
   if (!user.isActive) throw forbidden("Your account has been deactivated. Ask the business owner to re-enable it.");
   await createSession(user.id, { ip, userAgent: req.headers.get("user-agent") ?? undefined });
   await audit({ restaurantId: user.restaurantId, actorType: "STAFF", actorUserId: user.id, action: "auth.login", entityType: "User", entityId: user.id, ip });
-  return ok({ redirect: user.restaurant.onboardingCompletedAt ? "/dashboard" : "/onboarding" });
+  return ok({ redirect: user.mustChangePassword ? "/change-password" : user.restaurant.onboardingCompletedAt ? "/dashboard" : "/onboarding" });
 });

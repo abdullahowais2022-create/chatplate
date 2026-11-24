@@ -48,3 +48,15 @@ export async function rateLimit(bucket: string, id: string, limit: number, windo
 export async function enforceRateLimit(bucket: string, id: string, limit: number, window: Window) {
   if (!(await rateLimit(bucket, id, limit, window))) throw tooMany();
 }
+
+/**
+ * Daily cap on staff-triggered AI tools (playground, suggestions, translations, AI setup, simulator)
+ * per business. Protects the OpenAI bill from abuse by throwaway sign-ups. Real customer messages
+ * from WhatsApp are not counted.
+ */
+export const AI_TOOLS_DAILY_LIMIT = 400;
+export async function enforceAiQuota(restaurantId: string) {
+  if (!(await rateLimit("ai-tools-daily", restaurantId, AI_TOOLS_DAILY_LIMIT, "24 h"))) {
+    throw tooMany("You've reached today's limit for AI tools. It resets within 24 hours; real customer chats keep working.");
+  }
+}

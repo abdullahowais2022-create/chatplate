@@ -4,7 +4,7 @@ import { replySchema } from "@/lib/schemas";
 import { db } from "@/server/db";
 import { sendToCustomer } from "@/server/services/messaging";
 import { audit } from "@/server/audit";
-import { enforceRateLimit } from "@/server/ratelimit";
+import { enforceAiQuota, enforceRateLimit } from "@/server/ratelimit";
 import { translateText } from "@/server/ai/translate";
 import { baseLang } from "@/server/ai/i18n";
 
@@ -25,6 +25,7 @@ export const POST = route<Ctx>(async (req, { params }) => {
   let outgoing = text;
   let original: string | null = null;
   if (translate && customerLang && baseLang(customerLang) !== staffLang) {
+    await enforceAiQuota(s.restaurantId);
     try {
       outgoing = (await translateText(text, customerLang, "to_customer")).text || text;
       original = text;

@@ -4,14 +4,15 @@ import { playgroundSchema } from "@/lib/schemas";
 import { loadRestaurantContext } from "@/server/ai/context";
 import { runPipeline } from "@/server/ai/pipeline";
 import { parseDraft } from "@/server/services/serialize";
-import { enforceRateLimit } from "@/server/ratelimit";
+import { enforceAiQuota, enforceRateLimit } from "@/server/ratelimit";
 import type { PipelineContext } from "@/server/ai/types";
 
 /** Dry-run of the AI against the live menu and settings. Nothing is stored or sent. */
 export const POST = route(async (req) => {
   const s = await requireApiSession("playground:use");
   await enforceRateLimit("playground", s.userId, 40, "1 m");
-  const input = await parseJson(req, playgroundSchema);
+  await enforceAiQuota(s.restaurantId);
+  const input = await parseJson(req, playgroundSchema, { maxBytes: 512 * 1024 });
   const { facts, menu } = await loadRestaurantContext(s.restaurantId);
   const ctx: PipelineContext = {
     restaurantId: s.restaurantId,

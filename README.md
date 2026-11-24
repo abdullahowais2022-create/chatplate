@@ -26,6 +26,7 @@
 | Dashboard | Overview and analytics, a WhatsApp-style live inbox (takeover, manual replies, AI suggestions, transcripts), orders (filters, one-click status, assign, print/download ticket, timeline), menu manager (variants, add-ons, sold out, translations, photos), customers, business settings, team and roles, audit log |
 | AI playground | Paste a message and see the detected language, intent, extracted order, missing info, proposed reply, and whether it would create, modify or cancel an order. A **customer simulator** runs full end-to-end orders without WhatsApp |
 | Languages | **Every language in the world**, including dialects and transliterated text (Roman Urdu, Arabizi, Hinglish), typed or as voice notes. The AI replies in the customer's language; the bot's fixed messages are AI-translated once per language and saved, and product names are translated into the customer's language automatically (and editable). In the inbox, every customer message is translated into your team's language, and staff can write in their own language with replies auto-translated for the customer. English, Arabic, French, Spanish, Hindi, Urdu and Turkish also have hand-written templates that work without OpenAI |
+| Security | See [docs/SECURITY.md](docs/SECURITY.md) for the latest security review, what is protected and what to configure |
 | Multi-tenant | Every row is scoped by `restaurantId` server-side. Roles are Owner, Manager and Staff |
 
 ## Tech stack

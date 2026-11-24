@@ -167,8 +167,9 @@ export async function handleInbound(env: InboundEnvelope): Promise<PipelineOutpu
         if (!creds) throw new Error("WhatsApp is not connected; cannot download media");
         const media = await downloadMedia(creds, env.mediaId);
         const key = `${env.restaurantId}/${message.id}.${media.mimeType.includes("ogg") ? "ogg" : "bin"}`;
-        await putPrivate(key, media.data, media.mimeType);
-        await db.voiceNote.update({ where: { id: vn.id }, data: { storageKey: key, sizeBytes: media.data.length, mimeType: media.mimeType } });
+        // Keeping the audio is best effort; the transcript is what matters for the order.
+        const stored = await putPrivate(key, media.data, media.mimeType).then(() => true, (err) => (console.warn("[voice] audio not stored", (err as Error).message), false));
+        await db.voiceNote.update({ where: { id: vn.id }, data: { storageKey: stored ? key : null, sizeBytes: media.data.length, mimeType: media.mimeType } });
         const tr = await transcribe(media.data, media.mimeType);
         if (!tr.ok) throw new Error(tr.reason);
         const detected = detectLanguage(tr.text, lang);
