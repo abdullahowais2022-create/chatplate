@@ -12,7 +12,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const [team, whatsapp, audit] = await Promise.all([
     listTeam(s.restaurantId),
-    can(s.role, "whatsapp:manage") ? getWhatsAppStatus(s.restaurantId, env().APP_URL) : null,
+    can(s.role, "whatsapp:manage") ? getWhatsAppStatus(s.restaurantId, env().APP_URL, s.email) : null,
     can(s.role, "audit:read") ? listAudit(s.restaurantId, 150) : null,
   ]);
   return (

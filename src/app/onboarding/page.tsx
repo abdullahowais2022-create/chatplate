@@ -13,7 +13,7 @@ export default async function OnboardingPage() {
   if (!can(s.role, "settings:write")) redirect("/dashboard");
   const [settings, whatsapp, menuCount] = await Promise.all([
     getSettings(s.restaurantId),
-    getWhatsAppStatus(s.restaurantId, env().APP_URL),
+    getWhatsAppStatus(s.restaurantId, env().APP_URL, s.email),
     db.menuItem.count({ where: { restaurantId: s.restaurantId, deletedAt: null } }),
   ]);
   const canManageWhatsApp = can(s.role, "whatsapp:manage");

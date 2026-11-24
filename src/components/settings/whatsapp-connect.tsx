@@ -73,11 +73,12 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
       {s.embeddedSignup && (s.status !== "CONNECTED" || expiringSoon) && <EmbeddedSignupButton config={s.embeddedSignup} onConnected={update} />}
       {!s.embeddedSignup && s.status !== "CONNECTED" && (
         <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-          One-click <b>Connect with Facebook</b> isn&apos;t switched on for this TillText server yet, so connect manually below. (Server admin: see &quot;One-click connect&quot; in docs/WHATSAPP_SETUP.md.)
+          One-click <b>Connect with Facebook</b> isn&apos;t switched on yet, so this number has to be connected manually below.
         </p>
       )}
 
-      <ManualSetup open={!s.embeddedSignup && s.status !== "CONNECTED"} title={s.embeddedSignup ? "Connect manually instead (advanced)" : "Manual connection"}>
+      {s.canConnectManually && (
+      <ManualSetup open={!s.embeddedSignup && s.status !== "CONNECTED"} title={s.embeddedSignup ? "Connect manually instead (admin only)" : "Manual connection"}>
       <section className="space-y-3">
         <h3 className="font-semibold">1. Add these to your Meta app&apos;s webhook settings</h3>
         <p className="text-sm text-muted-foreground">In <a className="text-primary underline" href="https://developers.facebook.com/apps" target="_blank" rel="noreferrer">developers.facebook.com <ExternalLink className="inline h-3 w-3" /></a> → your app → WhatsApp → Configuration → Webhook → Edit. Then subscribe to the <b>messages</b> field.</p>
@@ -105,6 +106,7 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
         <Button loading={busy === "save"} onClick={saveCreds} disabled={!f.wabaId || !f.phoneNumberId}>Save & verify</Button>
       </section>
       </ManualSetup>
+      )}
 
       {(s.hasAccessToken || s.usesPlatformToken) && <ConnectionCheck />}
 

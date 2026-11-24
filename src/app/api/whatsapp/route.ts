@@ -1,4 +1,6 @@
-import { route, ok, parseJson, clientIp, badRequest } from "@/server/http";
+import { embeddedSignupConfig } from "@/server/whatsapp/embedded";
+import { isPlatformAdmin } from "@/server/env";
+import { route, ok, parseJson, clientIp, badRequest, forbidden } from "@/server/http";
 import { requireApiSession } from "@/server/auth/session";
 import { whatsappCredentialsSchema } from "@/lib/schemas";
 import { db } from "@/server/db";
@@ -11,12 +13,13 @@ import { audit } from "@/server/audit";
 
 export const GET = route(async () => {
   const s = await requireApiSession("whatsapp:manage");
-  return ok(await getWhatsAppStatus(s.restaurantId, env().APP_URL));
+  return ok(await getWhatsAppStatus(s.restaurantId, env().APP_URL, s.email));
 });
 
 /** Saves credentials (encrypted) and verifies them against the Graph API. */
 export const PUT = route(async (req) => {
   const s = await requireApiSession("whatsapp:manage");
+  if (embeddedSignupConfig() && !isPlatformAdmin(s.email)) throw forbidden("Use Connect with Facebook to connect WhatsApp.");
   const input = await parseJson(req, whatsappCredentialsSchema);
   const acc = await db.whatsAppAccount.findUniqueOrThrow({ where: { restaurantId: s.restaurantId } });
   const accessToken = input.accessToken ?? decryptOrNull(acc.accessTokenEnc);
@@ -62,7 +65,7 @@ export const PUT = route(async (req) => {
     },
   });
   await audit({ restaurantId: s.restaurantId, actorType: "STAFF", actorUserId: s.userId, action: "whatsapp.credentials_updated", entityType: "WhatsAppAccount", entityId: acc.id, after: { wabaId: input.wabaId, phoneNumberId: input.phoneNumberId, tokenChanged: Boolean(input.accessToken), secretChanged: Boolean(input.appSecret), status }, ip: clientIp(req) });
-  return ok(await getWhatsAppStatus(s.restaurantId, env().APP_URL));
+  return ok(await getWhatsAppStatus(s.restaurantId, env().APP_URL, s.email));
 });
 
 export const DELETE = route(async (req) => {
@@ -72,5 +75,5 @@ export const DELETE = route(async (req) => {
     data: { accessTokenEnc: null, appSecretEnc: null, phoneNumberId: null, status: "NOT_CONNECTED", webhookVerifiedAt: null, lastError: null },
   });
   await audit({ restaurantId: s.restaurantId, actorType: "STAFF", actorUserId: s.userId, action: "whatsapp.disconnected", entityType: "WhatsAppAccount", entityId: acc.id, ip: clientIp(req) });
-  return ok(await getWhatsAppStatus(s.restaurantId, env().APP_URL));
+  return ok(await getWhatsAppStatus(s.restaurantId, env().APP_URL, s.email));
 });

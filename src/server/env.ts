@@ -20,6 +20,9 @@ const schema = z.object({
   // Permanent token of TillText's own Admin system user. Connected businesses' WhatsApp accounts are
   // assigned to it, so their connection never expires (Embedded Signup tokens last 60 days).
   META_SYSTEM_USER_TOKEN: z.string().optional(),
+  // Comma-separated emails of TillText's own admins. Only they see the manual WhatsApp connection
+  // and setup details once one-click Connect with Facebook is switched on.
+  PLATFORM_ADMIN_EMAILS: z.string().optional(),
   QSTASH_TOKEN: z.string().optional(),
   QSTASH_CURRENT_SIGNING_KEY: z.string().optional(),
   QSTASH_NEXT_SIGNING_KEY: z.string().optional(),
@@ -66,3 +69,10 @@ export function env(): Env {
 // These read process.env directly so they never throw on a partially configured deployment.
 export const isDemoMode = () => process.env.DEMO_MODE?.trim() === "true";
 export const hasOpenAI = () => Boolean(process.env.OPENAI_API_KEY?.trim());
+
+/** TillText's own admins (PLATFORM_ADMIN_EMAILS), not business owners. */
+export function isPlatformAdmin(email: string | null | undefined): boolean {
+  if (!email) return false;
+  const list = (process.env.PLATFORM_ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+  return list.includes(email.trim().toLowerCase());
+}

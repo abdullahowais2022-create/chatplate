@@ -24,7 +24,7 @@ export const POST = route(async (req) => {
   try {
     const r = await connectWithEmbeddedSignup(s.restaurantId, input);
     await audit({ restaurantId: s.restaurantId, actorType: "STAFF", actorUserId: s.userId, action: "whatsapp.connected_embedded", entityType: "WhatsAppAccount", entityId: s.restaurantId, after: { wabaId: input.wabaId, phoneNumberId: input.phoneNumberId, display: r.displayPhoneNumber, warning: r.warning }, ip: clientIp(req) });
-    return ok({ ...(await getWhatsAppStatus(s.restaurantId, env().APP_URL)), warning: r.warning });
+    return ok({ ...(await getWhatsAppStatus(s.restaurantId, env().APP_URL, s.email)), warning: r.warning });
   } catch (err) {
     if (err instanceof MetaApiError) throw badRequest(err.message);
     throw err;

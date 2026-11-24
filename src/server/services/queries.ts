@@ -1,4 +1,5 @@
 import "server-only";
+import { isPlatformAdmin } from "../env";
 import { embeddedSignupConfig } from "../whatsapp/embedded";
 import type { CustomerTag, OrderStatus, Prisma } from "@prisma/client";
 import { db } from "../db";
@@ -317,18 +318,23 @@ export async function getSettings(restaurantId: string) {
 }
 export type SettingsDTO = Awaited<ReturnType<typeof getSettings>>;
 
-export async function getWhatsAppStatus(restaurantId: string, appUrl: string) {
+export async function getWhatsAppStatus(restaurantId: string, appUrl: string, viewerEmail?: string) {
   const acc = await db.whatsAppAccount.findUnique({ where: { restaurantId } });
   if (!acc) return null;
+  const embeddedSignup = embeddedSignupConfig();
+  // Shops only get "Connect with Facebook". The manual form (Meta IDs, tokens, webhook) is for
+  // TillText's own admins, or for everyone while one-click isn't configured on this server.
+  const canConnectManually = !embeddedSignup || isPlatformAdmin(viewerEmail);
   return {
+    canConnectManually,
     status: acc.status,
     wabaId: acc.wabaId,
     phoneNumberId: acc.phoneNumberId,
     displayPhoneNumber: acc.displayPhoneNumber,
     hasAccessToken: Boolean(acc.accessTokenEnc),
     hasAppSecret: Boolean(acc.appSecretEnc),
-    verifyToken: acc.verifyToken,
-    webhookUrl: `${appUrl.replace(/\/$/, "")}/api/webhooks/whatsapp/${acc.webhookKey}`,
+    verifyToken: canConnectManually ? acc.verifyToken : "",
+    webhookUrl: canConnectManually ? `${appUrl.replace(/\/$/, "")}/api/webhooks/whatsapp/${acc.webhookKey}` : "",
     webhookVerifiedAt: acc.webhookVerifiedAt?.toISOString() ?? null,
     lastWebhookAt: acc.lastWebhookAt?.toISOString() ?? null,
     lastTestAt: acc.lastTestAt?.toISOString() ?? null,
@@ -337,7 +343,7 @@ export async function getWhatsAppStatus(restaurantId: string, appUrl: string) {
     usesPlatformToken: acc.usesPlatformToken,
     tokenExpiresAt: acc.tokenExpiresAt?.toISOString() ?? null,
     /** Settings for the one-click "Connect WhatsApp" button, or null when the platform hasn't enabled it. */
-    embeddedSignup: embeddedSignupConfig(),
+    embeddedSignup,
   };
 }
 export type WhatsAppStatusDTO = NonNullable<Awaited<ReturnType<typeof getWhatsAppStatus>>>;

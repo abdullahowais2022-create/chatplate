@@ -92,7 +92,7 @@ export function Wizard({ settings, whatsapp, menuCount, canManageWhatsApp }: { s
               <div className="space-y-6">
                 {canManageWhatsApp ? <WhatsAppConnect initial={wa} onChange={setWa} /> : <p className="text-sm text-muted-foreground">Only the owner can connect WhatsApp.</p>}
                 <div className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">
-                  Don&apos;t have Meta access yet? Continue anyway: you can test everything with the built-in customer simulator and connect later from <b>Settings → WhatsApp</b>. See the setup guide in <code>docs/WHATSAPP_SETUP.md</code>.
+                  Not ready yet? Continue anyway: you can try the assistant in the AI playground and connect WhatsApp later from <b>Settings → WhatsApp</b>.
                 </div>
                 <Button onClick={next}>{wa.status === "CONNECTED" ? "Continue" : "Continue without connecting"} <ArrowRight /></Button>
               </div>
