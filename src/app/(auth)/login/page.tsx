@@ -11,7 +11,7 @@ export default function LoginPage() {
       <p className="mt-1 text-sm text-muted-foreground">Sign in to your restaurant dashboard.</p>
       <LoginForm demo={isDemoMode()} />
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        New to Chatplate? <Link href="/signup" className="font-medium text-primary hover:underline">Create a restaurant account</Link>
+        New to MenuTexter? <Link href="/signup" className="font-medium text-primary hover:underline">Create a restaurant account</Link>
       </p>
     </>
   );

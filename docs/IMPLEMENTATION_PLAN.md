@@ -1,6 +1,6 @@
-# Chatplate — Implementation Plan
+# MenuTexter — Implementation Plan
 
-Chatplate is an AI WhatsApp ordering assistant for local restaurants. Customers order
+MenuTexter is an AI WhatsApp ordering assistant for local restaurants. Customers order
 entirely inside WhatsApp; restaurant staff run everything from a dashboard.
 There is **no customer-facing website and no online payment** of any kind.
 

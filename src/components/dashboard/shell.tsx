@@ -65,7 +65,7 @@ export function DashboardShell({ user, children }: { user: ShellUser; children: 
           <p className="truncate font-semibold">{user.restaurantName}</p>
         </div>
         {nav}
-        <div className="border-t p-3 text-xs text-muted-foreground">Payments are collected by your restaurant directly. Chatplate never processes payments.</div>
+        <div className="border-t p-3 text-xs text-muted-foreground">Payments are collected by your restaurant directly. MenuTexter never processes payments.</div>
       </aside>
 
       {/* Mobile drawer */}

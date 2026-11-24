@@ -26,7 +26,7 @@ export const POST = route(async (req) => {
     const json = (await res.json()) as { error?: { message?: string; code?: number } };
     if (!res.ok) throw new MetaApiError(json.error?.message ?? "Test message failed", res.status, json.error?.code);
     // Free-form text too: delivered only if the recipient has messaged this number in the last 24h.
-    await sendMessage(creds, normalizePhone(to), { kind: "text", text: "✅ Chatplate test message: your WhatsApp connection works!" }).catch(() => undefined);
+    await sendMessage(creds, normalizePhone(to), { kind: "text", text: "✅ MenuTexter test message: your WhatsApp connection works!" }).catch(() => undefined);
     await db.whatsAppAccount.update({ where: { restaurantId: s.restaurantId }, data: { lastTestAt: new Date(), lastError: null } });
     return ok({ sent: true });
   } catch (err) {

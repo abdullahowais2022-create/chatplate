@@ -1,6 +1,6 @@
 /* Demo data: "Saffron & Slice", a Mediterranean pizza & grill in Brooklyn.
  * Run with `npm run db:seed`. Idempotent: the demo restaurant is deleted and recreated.
- * Login: demo@chatplate.app / demo-password-2026 (also manager@ and kitchen@ with the same password).
+ * Login: demo@menutexter.app / demo-password-2026 (also manager@ and kitchen@ with the same password).
  */
 import { PrismaClient, type OrderStatus, type Prisma } from "@prisma/client";
 import { encrypt, hashPhone, randomToken } from "../src/server/crypto";
@@ -128,7 +128,7 @@ async function main() {
     await db.order.deleteMany({ where: { restaurantId: existing.id } });
     await db.restaurant.delete({ where: { id: existing.id } });
   }
-  await db.user.deleteMany({ where: { email: { in: ["demo@chatplate.app", "manager@chatplate.app", "kitchen@chatplate.app"] } } });
+  await db.user.deleteMany({ where: { email: { in: ["demo@menutexter.app", "manager@menutexter.app", "kitchen@menutexter.app"] } } });
 
   const passwordHash = await hashPassword(PASSWORD);
   const r = await db.restaurant.create({
@@ -177,9 +177,9 @@ async function main() {
       whatsapp: { create: { webhookKey: randomToken(18), verifyToken: randomToken(24), status: "NOT_CONNECTED" } },
       users: {
         create: [
-          { email: "demo@chatplate.app", name: "Nadia Haddad", role: "OWNER", passwordHash },
-          { email: "manager@chatplate.app", name: "Omar Khalil", role: "MANAGER", passwordHash },
-          { email: "kitchen@chatplate.app", name: "Jess Rivera", role: "STAFF", passwordHash },
+          { email: "demo@menutexter.app", name: "Nadia Haddad", role: "OWNER", passwordHash },
+          { email: "manager@menutexter.app", name: "Omar Khalil", role: "MANAGER", passwordHash },
+          { email: "kitchen@menutexter.app", name: "Jess Rivera", role: "STAFF", passwordHash },
         ],
       },
     },
@@ -386,7 +386,7 @@ async function main() {
   await db.auditLog.create({ data: { restaurantId: r.id, actorType: "SYSTEM", action: "demo.seeded", entityType: "Restaurant", entityId: r.id } });
 
   console.log(`Seeded "${r.name}" with ${items.length} menu items, ${customers.length} customers, ${seq - 1000} orders.`);
-  console.log(`Login: demo@chatplate.app / ${PASSWORD}  (also manager@chatplate.app, kitchen@chatplate.app)`);
+  console.log(`Login: demo@menutexter.app / ${PASSWORD}  (also manager@menutexter.app, kitchen@menutexter.app)`);
 }
 
 main()

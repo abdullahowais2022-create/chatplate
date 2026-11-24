@@ -22,7 +22,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/10" />
         <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-white/5" />
         <h2 className="relative text-4xl font-bold leading-tight">Your restaurant&apos;s orders,<br />straight from WhatsApp.</h2>
-        <p className="relative mt-4 max-w-md text-lg text-white/85">Customers text or send a voice note in their own language. Chatplate understands it, confirms the order and drops it into your dashboard.</p>
+        <p className="relative mt-4 max-w-md text-lg text-white/85">Customers text or send a voice note in their own language. MenuTexter understands it, confirms the order and drops it into your dashboard.</p>
         <ul className="relative mt-10 space-y-4 text-white/90">
           {[
             [MessageCircle, "Text and voice-note ordering, 24/7"],

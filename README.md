@@ -1,11 +1,11 @@
-<p align="center"><img src="public/logo.svg" alt="Chatplate" width="280"></p>
+<p align="center"><img src="public/logo.svg" alt="MenuTexter" width="280"></p>
 
-# Chatplate
+# MenuTexter
 
-**An AI WhatsApp ordering assistant for local restaurants.** Customers order by text or voice note on WhatsApp, in their own language. Chatplate understands them, checks everything against the restaurant's real menu, confirms the order, and drops it into a live dashboard for staff.
+**An AI WhatsApp ordering assistant for local restaurants.** Customers order by text or voice note on WhatsApp, in their own language. MenuTexter understands them, checks everything against the restaurant's real menu, confirms the order, and drops it into a live dashboard for staff.
 
 - 🚫 **No customer website.** The whole customer experience happens inside WhatsApp.
-- 🚫 **No online payments.** The restaurant collects payment itself. Chatplate only records a *preference* (cash, card on delivery, and so on) and never asks for card details or sends payment links.
+- 🚫 **No online payments.** The restaurant collects payment itself. MenuTexter only records a *preference* (cash, card on delivery, and so on) and never asks for card details or sends payment links.
 
 | Overview | Live inbox (Arabic voice-note order) | AI playground |
 |---|---|---|
@@ -65,7 +65,7 @@ npm run db:seed
 npm run dev
 ```
 
-Open http://localhost:3000 and click **Try the demo**, or sign in with `demo@chatplate.app` / `demo-password-2026`. The seed also creates `manager@chatplate.app` and `kitchen@chatplate.app` (same password) so you can see each role.
+Open http://localhost:3000 and click **Try the demo**, or sign in with `demo@menutexter.app` / `demo-password-2026`. The seed also creates `manager@menutexter.app` and `kitchen@menutexter.app` (same password) so you can see each role.
 
 The demo restaurant, **Saffron & Slice**, has a 22-item multilingual menu, delivery zones, 8 customers writing in 7 languages, conversations (including a voice-note transcript and a complaint escalated to staff), and a week of orders for the analytics.
 
@@ -165,8 +165,8 @@ These steps need a human with access to Meta and your business documents, so the
 1. **Meta Business verification:** submit business documents in Meta Business Manager. Without it, you're limited to a test number and low messaging limits.
 2. **WhatsApp phone number:** add and verify a number in WhatsApp Manager (by SMS or voice). It can't already be registered on the consumer WhatsApp app.
 3. **Permanent access token:** create a System User in Business Settings, give it the `whatsapp_business_messaging` and `whatsapp_business_management` permissions, assign the WhatsApp account, and generate a non-expiring token.
-4. **Webhook configuration:** paste the callback URL and verify token shown in Chatplate into your Meta app, then subscribe to the `messages` field. It needs a public HTTPS URL.
-5. **Message templates (optional):** WhatsApp only allows free-form messages within **24 hours** of the customer's last message. Status updates sent later, or staff alerts to a phone that hasn't written recently, need Meta-approved templates. Chatplate sends free-form messages and shows a clear error in the inbox when the window has closed.
+4. **Webhook configuration:** paste the callback URL and verify token shown in MenuTexter into your Meta app, then subscribe to the `messages` field. It needs a public HTTPS URL.
+5. **Message templates (optional):** WhatsApp only allows free-form messages within **24 hours** of the customer's last message. Status updates sent later, or staff alerts to a phone that hasn't written recently, need Meta-approved templates. MenuTexter sends free-form messages and shows a clear error in the inbox when the window has closed.
 6. **Payment processing:** intentionally out of scope. The restaurant handles it in person.
 
 ## Known limitations and next steps

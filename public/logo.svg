@@ -1,17 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 64" role="img" aria-label="Chatplate">
-  <defs>
-    <linearGradient id="cp-g2" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FB8A3C"/>
-      <stop offset="1" stop-color="#E35413"/>
-    </linearGradient>
-  </defs>
-  <path d="M32 4C16.54 4 4 15.4 4 29.5c0 7.3 3.37 13.88 8.78 18.53L10.2 59.2a1 1 0 0 0 1.43 1.1l12.06-6.02A30.6 30.6 0 0 0 32 55c15.46 0 28-11.4 28-25.5S47.46 4 32 4Z" fill="url(#cp-g2)"/>
-  <circle cx="32" cy="29.5" r="17" fill="#FFFFFF"/>
-  <circle cx="32" cy="29.5" r="12.2" fill="none" stroke="#FECCAA" stroke-width="2"/>
-  <circle cx="25.6" cy="29.5" r="2.6" fill="#E35413"/>
-  <circle cx="32" cy="29.5" r="2.6" fill="#F26B1D"/>
-  <circle cx="38.4" cy="29.5" r="2.6" fill="#FB8A3C"/>
-  <text x="74" y="43" font-family="ui-rounded, 'SF Pro Rounded', 'Nunito', 'Segoe UI', system-ui, sans-serif" font-size="38" font-weight="800" letter-spacing="-1">
-    <tspan fill="#1F1B16">chat</tspan><tspan fill="#E35413">plate</tspan>
-  </text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 316 64" role="img" aria-label="MenuTexter">
+  <path d="M32 4C16.54 4 4 15.4 4 29.5c0 7.3 3.37 13.88 8.78 18.53L10.2 59.2a1 1 0 0 0 1.43 1.1l12.06-6.02A30.6 30.6 0 0 0 32 55c15.46 0 28-11.4 28-25.5S47.46 4 32 4Z" fill="#EE621A"/>
+  <path d="M32 4C16.54 4 4 15.4 4 29.5c0 2.2.3 4.33.87 6.36C8.6 22.1 19.3 12 32 12s23.4 10.1 27.13 23.86c.57-2.03.87-4.16.87-6.36C60 15.4 47.46 4 32 4Z" fill="#FB8A3C" opacity=".55"/>
+  <rect x="18" y="13" width="28" height="33" rx="4.5" fill="#FFFFFF"/>
+  <path d="M25.5 20.5h13" stroke="#E35413" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M23.5 28h11M23.5 33.5h11M23.5 39h11" stroke="#FDAC74" stroke-width="2.6" stroke-linecap="round"/>
+  <circle cx="40" cy="28" r="1.7" fill="#E35413"/>
+  <circle cx="40" cy="33.5" r="1.7" fill="#E35413"/>
+  <circle cx="40" cy="39" r="1.7" fill="#E35413"/>
+  <text x="72" y="43" font-family="ui-rounded, 'SF Pro Rounded', 'Nunito', 'Segoe UI', system-ui, sans-serif" font-size="36" font-weight="800" letter-spacing="-1"><tspan fill="#1F1B16">menu</tspan><tspan fill="#E35413">texter</tspan></text>
 </svg>

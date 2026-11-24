@@ -1,5 +1,5 @@
-export const DEMO_EMAIL = "demo@chatplate.app";
-export const APP_NAME = "Chatplate";
+export const DEMO_EMAIL = "demo@menutexter.app";
+export const APP_NAME = "MenuTexter";
 
 export const STATUS_LABEL: Record<string, string> = {
   NEW: "New",

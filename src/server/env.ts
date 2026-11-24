@@ -21,7 +21,7 @@ const schema = z.object({
   SUPABASE_PRIVATE_BUCKET: z.string().default("voice-notes"),
   SUPABASE_PUBLIC_BUCKET: z.string().default("public-media"),
   RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().default("Chatplate <orders@example.com>"),
+  EMAIL_FROM: z.string().default("MenuTexter <orders@example.com>"),
   DEMO_MODE: z.string().optional(),
   CRON_SECRET: z.string().optional(),
 });

@@ -204,7 +204,7 @@ export function PaymentForm({ settings, onSaved, submitLabel = "Save payment opt
   const { busy, save } = useSave(onSaved);
   return (
     <div className="space-y-4">
-      <div className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">Chatplate never processes payments, sends payment links or asks for card details. It only records how the customer <b>prefers</b> to pay you.</div>
+      <div className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">MenuTexter never processes payments, sends payment links or asks for card details. It only records how the customer <b>prefers</b> to pay you.</div>
       <div>
         <p className="mb-1.5 text-sm font-medium">Payment methods you accept</p>
         <div className="flex flex-wrap gap-2">
