@@ -124,7 +124,7 @@ async function discoverSharedNumber(accessToken: string): Promise<{ wabaId: stri
   const res = await fetch(url, { signal: AbortSignal.timeout(15_000) }).catch(() => null);
   const json = (await res?.json().catch(() => null)) as { data?: { granular_scopes?: { scope: string; target_ids?: string[] }[] } } | null;
   const wabaIds = [...new Set((json?.data?.granular_scopes ?? []).filter((g) => g.scope === "whatsapp_business_management" || g.scope === "whatsapp_business_messaging").flatMap((g) => g.target_ids ?? []))];
-  if (!wabaIds.length) throw new MetaApiError("Facebook login worked, but no WhatsApp Business account was shared. In Meta's window, choose or create a WhatsApp Business account and add your number, then press Finish.", 400);
+  if (!wabaIds.length) throw new MetaApiError("Facebook skipped the WhatsApp steps, so no number was shared. Press Connect again, and if Facebook asks to continue with your previous settings, click Edit Settings, then choose your WhatsApp account and number and press Finish.", 400);
 
   type Num = { id: string; display_phone_number?: string; last_onboarded_time?: string };
   const candidates: { wabaId: string; num: Num }[] = [];
@@ -198,7 +198,7 @@ export async function connectWithEmbeddedSignup(
     if (!found) {
       if (env().META_SYSTEM_USER_TOKEN && request.phone) {
         throw new MetaApiError(
-          "Facebook finished, but TillText can't see your WhatsApp number yet. In business.facebook.com → Settings → System users → TillText → Assign assets → WhatsApp accounts, give TillText Full control of your WhatsApp account, then press Connect again.",
+          "TillText couldn't find your WhatsApp number. Usually Facebook skipped the WhatsApp steps: press Connect again and, if Facebook asks to continue with your previous settings, click Edit Settings, then choose your number and press Finish. (TillText admin: if it still fails, give the TillText system user Full control of that WhatsApp account in Business settings.)",
           400,
         );
       }
