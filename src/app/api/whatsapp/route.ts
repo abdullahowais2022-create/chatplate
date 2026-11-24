@@ -72,7 +72,8 @@ export const DELETE = route(async (req) => {
   const s = await requireApiSession("whatsapp:manage");
   const acc = await db.whatsAppAccount.update({
     where: { restaurantId: s.restaurantId },
-    data: { accessTokenEnc: null, appSecretEnc: null, phoneNumberId: null, status: "NOT_CONNECTED", webhookVerifiedAt: null, lastError: null },
+    // Forget everything about the old number so nothing stale is shown.
+    data: { accessTokenEnc: null, appSecretEnc: null, phoneNumberId: null, wabaId: null, displayPhoneNumber: null, status: "NOT_CONNECTED", webhookVerifiedAt: null, lastWebhookAt: null, lastTestAt: null, lastError: null, usesPlatformToken: false, tokenExpiresAt: null },
   });
   await audit({ restaurantId: s.restaurantId, actorType: "STAFF", actorUserId: s.userId, action: "whatsapp.disconnected", entityType: "WhatsAppAccount", entityId: acc.id, ip: clientIp(req) });
   return ok(await getWhatsAppStatus(s.restaurantId, env().APP_URL, s.email));

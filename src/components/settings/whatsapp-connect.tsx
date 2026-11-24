@@ -29,6 +29,7 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
     onChange?.(next);
   };
   const st = STATUS[s.status] ?? STATUS.NOT_CONNECTED!;
+  const connected = s.status === "CONNECTED";
   // Embedded Signup tokens can expire (60 days) when TillText's permanent token isn't set up.
   const expiresAt = !s.usesPlatformToken && s.tokenExpiresAt ? new Date(s.tokenExpiresAt) : null;
   const expiringSoon = expiresAt !== null && expiresAt.getTime() - Date.now() < 14 * 24 * 3600 * 1000;
@@ -58,19 +59,22 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 p-4">
-        <st.icon className={s.status === "CONNECTED" ? "h-6 w-6 text-success" : s.status === "ERROR" ? "h-6 w-6 text-destructive" : "h-6 w-6 text-muted-foreground"} />
-        <div className="flex-1">
-          <div className="flex items-center gap-2"><p className="font-semibold">{s.displayPhoneNumber ?? "WhatsApp Business number"}</p><Badge variant={st.variant}>{st.label}</Badge></div>
-          <p className="text-xs text-muted-foreground">
-            Webhook {s.webhookVerifiedAt ? `verified ${timeAgo(s.webhookVerifiedAt)}` : "not verified yet"} · Last event {s.lastWebhookAt ? timeAgo(s.lastWebhookAt) : "never"}{s.lastTestAt ? ` · Test sent ${formatDateTime(s.lastTestAt)}` : ""}
-          </p>
-          {s.lastError && <p className="mt-1 text-xs text-destructive">{s.lastError}</p>}
-          {expiresAt && <p className={expiringSoon ? "mt-1 text-xs font-medium text-destructive" : "mt-1 text-xs text-muted-foreground"}>Connection {expiresAt.getTime() < Date.now() ? "expired" : "expires"} on {formatDateTime(expiresAt.toISOString())}. {expiringSoon ? "Reconnect below to keep the AI replying." : ""}</p>}
+      {connected || s.status === "ERROR" || s.canConnectManually ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 p-4">
+          <st.icon className={connected ? "h-6 w-6 text-success" : s.status === "ERROR" ? "h-6 w-6 text-destructive" : "h-6 w-6 text-muted-foreground"} />
+          <div className="flex-1">
+            <div className="flex items-center gap-2"><p className="font-semibold">{(connected || s.status === "ERROR") && s.displayPhoneNumber ? s.displayPhoneNumber : "WhatsApp number"}</p><Badge variant={st.variant}>{st.label}</Badge></div>
+            {connected && <p className="text-xs text-muted-foreground">{s.lastWebhookAt ? `Last customer message ${timeAgo(s.lastWebhookAt)}` : "Waiting for the first customer message"}</p>}
+            {s.canConnectManually && (
+              <p className="text-xs text-muted-foreground">Admin: webhook {s.webhookVerifiedAt ? `verified ${timeAgo(s.webhookVerifiedAt)}` : "not verified"}{s.lastTestAt ? ` · test sent ${formatDateTime(s.lastTestAt)}` : ""}</p>
+            )}
+            {s.lastError && <p className="mt-1 text-xs text-destructive">{s.lastError}</p>}
+            {expiresAt && <p className={expiringSoon ? "mt-1 text-xs font-medium text-destructive" : "mt-1 text-xs text-muted-foreground"}>Connection {expiresAt.getTime() < Date.now() ? "expired" : "expires"} on {formatDateTime(expiresAt.toISOString())}. {expiringSoon ? "Reconnect below to keep the AI replying." : ""}</p>}
+          </div>
         </div>
-      </div>
+      ) : null}
 
-      {s.embeddedSignup && (s.status !== "CONNECTED" || expiringSoon) && <EmbeddedSignupButton config={s.embeddedSignup} onConnected={update} />}
+      {s.embeddedSignup && (!connected || expiringSoon) && <EmbeddedSignupButton config={s.embeddedSignup} prefill={s.prefill} onConnected={update} />}
       {!s.embeddedSignup && s.status !== "CONNECTED" && (
         <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
           One-click <b>Connect with Facebook</b> isn&apos;t switched on yet, so this number has to be connected manually below.
@@ -108,8 +112,9 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
       </ManualSetup>
       )}
 
-      {(s.hasAccessToken || s.usesPlatformToken) && <ConnectionCheck />}
+      {connected && <ConnectionCheck />}
 
+      {s.canConnectManually && connected && (
       <section className="space-y-3">
         <h3 className="font-semibold">Send a test message</h3>
         <p className="text-sm text-muted-foreground">Sends Meta&apos;s approved <code>hello_world</code> template to any WhatsApp number.</p>
@@ -118,6 +123,7 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
           <Button variant="outline" loading={busy === "test"} disabled={!testTo || !s.hasAccessToken} onClick={() => run("test", () => api("/api/whatsapp/test", { body: { to: testTo } }), "Test message sent. Check WhatsApp.")}><Send /> Send test</Button>
         </div>
       </section>
+      )}
 
       {s.hasAccessToken && (
         <div className="border-t pt-4">

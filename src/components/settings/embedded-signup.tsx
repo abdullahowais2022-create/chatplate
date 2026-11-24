@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { WhatsAppStatusDTO } from "@/server/services/queries";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/label";
 import { api } from "@/lib/api";
 
 type Config = NonNullable<WhatsAppStatusDTO["embeddedSignup"]>;
@@ -57,7 +59,29 @@ function loadSdk(cfg: Config): Promise<FBStatic> {
  * owner logs in, picks or creates their WhatsApp Business Account and verifies their number by SMS.
  * TillText never sees their Facebook password.
  */
-export function EmbeddedSignupButton({ config, onConnected }: { config: Config; onConnected: (s: WhatsAppStatusDTO) => void }) {
+type Prefill = WhatsAppStatusDTO["prefill"];
+
+/** WhatsApp profile category Meta expects, from the TillText business type. */
+const CATEGORY: Record<string, string> = { restaurant: "RESTAURANT", cafe: "RESTAURANT", grocery: "GROCERY", butcher: "GROCERY", pharmacy: "HEALTH", retail: "RETAIL", electronics: "RETAIL", florist: "RETAIL", other: "OTHER" };
+
+/** Meta wants the phone as { code, number }: country code and the national number without a leading 0. */
+function splitPhone(cc: string, local: string) {
+  const code = cc.replace(/\D/g, "");
+  const number = local.replace(/\D/g, "").replace(/^0+/, "");
+  return { code, number };
+}
+
+export function EmbeddedSignupButton({ config, prefill, onConnected }: { config: Config; prefill?: Prefill; onConnected: (s: WhatsAppStatusDTO) => void }) {
+  // Pre-fill from the business profile when a phone with a + prefix is saved there.
+  const saved = (prefill?.phone ?? "").trim();
+  const savedMatch = /^\+(\d{1,3})[\s-]*(.*)$/.exec(saved);
+  const [form, setForm] = useState({
+    cc: savedMatch?.[1] ? `+${savedMatch[1]}` : "+",
+    number: savedMatch?.[2] ?? "",
+    name: prefill?.name ?? "",
+  });
+  const phone = splitPhone(form.cc, form.number);
+  const formError = !phone.code ? "Enter your country code, e.g. +92 or +1." : phone.number.length < 6 ? "Enter your WhatsApp number." : form.name.trim().length < 2 ? "Enter the business name customers should see." : null;
   const [busy, setBusy] = useState(false);
   const [sdk, setSdk] = useState<{ state: "loading" | "ready" | "error"; error?: string }>({ state: "loading" });
   const [popupHint, setPopupHint] = useState(false);
@@ -117,6 +141,10 @@ export function EmbeddedSignupButton({ config, onConnected }: { config: Config; 
 
   // Must call FB.login synchronously inside the click, or the browser blocks Facebook's window.
   const start = () => {
+    if (formError) {
+      toast.error(formError);
+      return;
+    }
     const FB = window.FB;
     if (!FB) {
       toast.error(sdk.error ?? "Facebook is still loading. Try again in a moment.");
@@ -135,7 +163,19 @@ export function EmbeddedSignupButton({ config, onConnected }: { config: Config; 
           config_id: config.configId,
           response_type: "code",
           override_default_response_type: true,
-          extras: { setup: {}, featureType: mode === "app" ? "whatsapp_business_app_onboarding" : "", sessionInfoVersion: "3" },
+          extras: {
+            // Pre-fills Meta's window so the owner mostly just confirms.
+            setup: {
+              business: {
+                name: form.name.trim(),
+                ...(prefill?.email ? { email: prefill.email } : {}),
+                phone: { code: Number(phone.code), number: phone.number },
+              },
+              phone: { displayName: form.name.trim().slice(0, 50), category: CATEGORY[prefill?.businessType ?? "other"] ?? "OTHER" },
+            },
+            featureType: mode === "app" ? "whatsapp_business_app_onboarding" : "",
+            sessionInfoVersion: "3",
+          },
         },
       );
     } catch (e) {
@@ -154,34 +194,43 @@ export function EmbeddedSignupButton({ config, onConnected }: { config: Config; 
     <div className="space-y-4 rounded-lg border bg-card p-5">
       <div>
         <h3 className="font-semibold">Connect your WhatsApp number</h3>
-        <p className="mt-0.5 text-sm text-muted-foreground">About two minutes. Everything else is set up for you.</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">Fill this in and press Connect. Facebook&apos;s window opens already filled in; just confirm.</p>
       </div>
-      <div role="radiogroup" aria-label="Which number" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {([
-          ["app", "My number already uses the WhatsApp Business app", "Keep chatting on your phone as usual. TillText answers alongside you, and replies you send from the phone show up here too."],
-          ["new", "A new number, or one not on WhatsApp yet", "TillText handles this number completely; it won't work in the WhatsApp phone app."],
-        ] as const).map(([value, title, text]) => (
-          <button
-            key={value}
-            type="button"
-            role="radio"
-            aria-checked={mode === value}
-            onClick={() => setMode(value)}
-            className={`rounded-md border p-3 text-left text-sm transition-colors ${mode === value ? "border-foreground ring-1 ring-foreground" : "hover:bg-muted/60"}`}
-          >
-            <span className="block font-medium">{title}</span>
-            <span className="text-muted-foreground">{text}</span>
-          </button>
-        ))}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[110px_1fr]">
+        <Field label="Country code"><Input inputMode="tel" value={form.cc} onChange={(e) => setForm({ ...form, cc: e.target.value })} placeholder="+92" /></Field>
+        <Field label="WhatsApp number"><Input inputMode="tel" value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} placeholder="300 1234567" /></Field>
       </div>
-      <ol className="space-y-1.5 text-sm text-muted-foreground">
-        <li><span className="num mr-2 text-foreground">1</span>Log in with Facebook in Meta&apos;s own window. TillText never sees your password.</li>
-        <li><span className="num mr-2 text-foreground">2</span>Pick or create your WhatsApp Business account.</li>
-        <li><span className="num mr-2 text-foreground">3</span>{mode === "app" ? "Scan the QR code Meta shows with your WhatsApp Business app." : "Enter the code Meta sends to the number by SMS or call."}</li>
-      </ol>
+      <Field label="Name customers will see" hint="Use your real business name. Meta checks it.">
+        <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={50} />
+      </Field>
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Is this number on the WhatsApp Business app on your phone?</legend>
+        <div role="radiogroup" className="flex flex-wrap gap-2">
+          {([
+            ["app", "Yes, keep using it on my phone"],
+            ["new", "No, it's a new number"],
+          ] as const).map(([value, title]) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={mode === value}
+              onClick={() => setMode(value)}
+              className={`rounded-md border px-3 py-2 text-sm transition-colors ${mode === value ? "border-foreground bg-foreground text-background" : "hover:bg-muted/60"}`}
+            >
+              {title}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {mode === "app"
+            ? "You'll scan a QR code with the WhatsApp Business app. You keep chatting on your phone; TillText answers alongside you."
+            : "Meta will send a code to this number by SMS or call. It must not be active in the WhatsApp phone app."}
+        </p>
+      </fieldset>
       <Button size="lg" onClick={start} loading={busy || sdk.state === "loading"} disabled={sdk.state === "error"} className="w-full bg-[#1877F2] text-white hover:bg-[#166fe5] sm:w-auto">
         <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden><path fill="currentColor" d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07Z" /></svg>
-        Connect with Facebook
+        Connect
       </Button>
       {sdk.state === "error" && <p className="text-sm text-destructive">{sdk.error}</p>}
       {busy && popupHint && (
@@ -190,11 +239,6 @@ export function EmbeddedSignupButton({ config, onConnected }: { config: Config; 
           <button type="button" onClick={cancel} className="mt-2 text-sm font-medium underline underline-offset-2">Cancel and try again</button>
         </div>
       )}
-      <p className="text-xs text-muted-foreground">
-        {mode === "app"
-          ? "Official Meta connection, so there's no ban risk. Keep the WhatsApp Business app updated and open it at least every couple of weeks to stay linked."
-          : "Use a number that isn't active in the WhatsApp or WhatsApp Business phone app, or remove it from the app first."}
-      </p>
     </div>
   );
 }

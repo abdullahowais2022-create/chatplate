@@ -319,7 +319,7 @@ export async function getSettings(restaurantId: string) {
 export type SettingsDTO = Awaited<ReturnType<typeof getSettings>>;
 
 export async function getWhatsAppStatus(restaurantId: string, appUrl: string, viewerEmail?: string) {
-  const acc = await db.whatsAppAccount.findUnique({ where: { restaurantId } });
+  const acc = await db.whatsAppAccount.findUnique({ where: { restaurantId }, include: { restaurant: { select: { name: true, phone: true, email: true, address: true, businessType: true } } } });
   if (!acc) return null;
   const embeddedSignup = embeddedSignupConfig();
   // Shops only get "Connect with Facebook". The manual form (Meta IDs, tokens, webhook) is for
@@ -344,6 +344,8 @@ export async function getWhatsAppStatus(restaurantId: string, appUrl: string, vi
     tokenExpiresAt: acc.tokenExpiresAt?.toISOString() ?? null,
     /** Settings for the one-click "Connect WhatsApp" button, or null when the platform hasn't enabled it. */
     embeddedSignup,
+    /** Business details used to pre-fill Meta's signup window. */
+    prefill: { name: acc.restaurant.name, phone: acc.restaurant.phone, email: acc.restaurant.email, businessType: acc.restaurant.businessType },
   };
 }
 export type WhatsAppStatusDTO = NonNullable<Awaited<ReturnType<typeof getWhatsAppStatus>>>;
