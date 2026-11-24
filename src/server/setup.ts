@@ -21,9 +21,9 @@ function keyOk(v: string) {
 export async function setupProblems(): Promise<SetupProblem[]> {
   if (healthy) return [];
   const problems: SetupProblem[] = [];
-  const dbUrl = clean(process.env.DATABASE_URL);
+  const dbUrl = clean(process.env.DATABASE_URL) || clean(process.env.POSTGRES_PRISMA_URL) || clean(process.env.POSTGRES_URL);
   if (!dbUrl) {
-    problems.push({ key: "DATABASE_URL", title: "No database connected", fix: "Add DATABASE_URL (your Neon or Supabase connection string, starting with postgresql://) in Vercel → Settings → Environment Variables, then redeploy." });
+    problems.push({ key: "DATABASE_URL", title: "No database connected", fix: "Easiest: in your Vercel project open the Storage tab → Create Database → Neon → connect it to this project, then redeploy. (Or add DATABASE_URL yourself with a postgresql:// connection string.)" });
   } else if (!/^postgres(ql)?:\/\//.test(dbUrl)) {
     problems.push({ key: "DATABASE_URL", title: "DATABASE_URL doesn't look right", fix: "It must start with postgresql://. Copy the whole connection string from Neon (Dashboard → Connect) again." });
   }

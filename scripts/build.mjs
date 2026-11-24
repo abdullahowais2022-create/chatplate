@@ -10,14 +10,17 @@ const clean = (v) => (v ?? "").trim().replace(/^["']|["']$/g, "");
 
 if (run("npx", ["prisma", "generate"]) !== 0) process.exit(1);
 
-const dbUrl = clean(process.env.DATABASE_URL);
-const directUrl = clean(process.env.DIRECT_URL) || dbUrl;
+// DATABASE_URL may also come from Vercel's Neon/Postgres integration under other names.
+const dbUrl = clean(process.env.DATABASE_URL) || clean(process.env.POSTGRES_PRISMA_URL) || clean(process.env.POSTGRES_URL);
+const directUrl =
+  clean(process.env.DIRECT_URL) || clean(process.env.DATABASE_URL_UNPOOLED) || clean(process.env.POSTGRES_URL_NON_POOLING) || dbUrl;
 if (!dbUrl) {
   console.warn("\n⚠️  DATABASE_URL is not set: skipping database migrations. The site will show a setup page until you add it.\n");
 } else {
   console.log("\n▶ Applying database migrations…");
   // Migrations need a direct (non-pooled) connection when one is available.
   const status = run("npx", ["prisma", "migrate", "deploy"], { ...process.env, DATABASE_URL: directUrl });
+  process.env.DATABASE_URL = dbUrl;
   if (status !== 0) {
     console.warn("\n⚠️  Database migrations FAILED (see the error above). Check DATABASE_URL / DIRECT_URL, then redeploy.");
     console.warn("    The build continues; the site will show a setup page describing the problem.\n");
