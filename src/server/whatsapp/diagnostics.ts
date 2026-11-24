@@ -37,9 +37,26 @@ export async function diagnoseWhatsApp(restaurantId: string): Promise<Check[]> {
     );
     checks.push({ label: "Access token", ok: true, detail: `Works for ${info.display_phone_number ?? "this number"}.` });
     const registered = !info.platform_type || info.platform_type === "CLOUD_API";
-    checks.push({ label: "Number activated", ok: registered, detail: registered ? `Ready${info.status ? ` (${info.status.toLowerCase()})` : ""}.` : `Not active on the Cloud API yet (${info.platform_type}). Press Save & verify to activate it.` });
-    if (info.name_status && !["APPROVED", "AVAILABLE_WITHOUT_REVIEW"].includes(info.name_status)) {
-      checks.push({ label: "Display name", ok: true, detail: `Meta is reviewing the display name (${info.name_status.toLowerCase().replace(/_/g, " ")}). Messages still work.` });
+    checks.push({ label: "Number activated", ok: registered, detail: registered ? "Registered on the WhatsApp Cloud API." : `Not active on the Cloud API yet (${info.platform_type}). Press Save & verify to activate it.` });
+    const status = (info.status ?? "").toUpperCase();
+    const BLOCKED: Record<string, string> = {
+      BANNED: "Meta has banned this number, so it can't send or receive messages. For Meta's free test number this is common; connect your real business number instead. For a real number, appeal in WhatsApp Manager → Account quality.",
+      RESTRICTED: "Meta has restricted this number (usually too many blocks or reports). It can only reply to customers. Check WhatsApp Manager → Account quality.",
+      FLAGGED: "Meta has flagged this number for low quality. Fewer complaints will clear it; check WhatsApp Manager → Account quality.",
+      DISCONNECTED: "This number is disconnected from WhatsApp. Reconnect it in TillText.",
+      PENDING: "Meta is still setting this number up. Try again in a few minutes.",
+    };
+    if (status) checks.push({ label: "Number status", ok: status === "CONNECTED" || status === "PENDING", detail: BLOCKED[status] ?? (status === "CONNECTED" ? "Active and able to message." : `Meta reports: ${status.toLowerCase()}.`) });
+    const name = (info.name_status ?? "").toUpperCase();
+    if (name && !["APPROVED", "AVAILABLE_WITHOUT_REVIEW"].includes(name)) {
+      const declined = name === "DECLINED" || name === "EXPIRED" || name === "NON_EXISTS";
+      checks.push({
+        label: "Display name",
+        ok: !declined,
+        detail: declined
+          ? "Meta declined the display name. Messages show your number instead of a name and sending limits stay low. Change it in WhatsApp Manager → Phone numbers → your number → Profile (it must match your real business name)."
+          : "Meta is still reviewing the display name. Messages work meanwhile.",
+      });
     }
   } catch (err) {
     checks.push({ label: "Access token", ok: false, detail: err instanceof MetaApiError ? err.message : "Couldn't reach Meta." });
@@ -77,7 +94,7 @@ export async function diagnoseWhatsApp(restaurantId: string): Promise<Check[]> {
     label: "Messages received",
     ok: Boolean(acc.lastWebhookAt),
     detail: acc.lastWebhookAt
-      ? `Last one ${acc.lastWebhookAt.toISOString()}.`
+      ? `Last one ${acc.lastWebhookAt.toISOString().replace("T", " ").slice(0, 16)} UTC.`
       : acc.lastError
         ? acc.lastError
         : "None yet. In Meta, make sure the app is Published and the webhook field “messages” is Subscribed, then message the number from your phone.",
