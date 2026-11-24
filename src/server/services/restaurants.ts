@@ -19,6 +19,7 @@ export async function createRestaurantWithOwner(input: z.infer<typeof signupSche
     const restaurant = await tx.restaurant.create({
       data: {
         name: input.restaurantName,
+        businessType: input.businessType,
         slug: `${slugify(input.restaurantName)}-${randomToken(4).toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5)}`,
         isDemo: opts.isDemo ?? false,
         supportedLanguages: ["*"],

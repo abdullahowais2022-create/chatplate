@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input, NativeSelect, PasswordInput } from "@/components/ui/input";
+import { BUSINESS_TYPES } from "@/lib/business";
 import { Field } from "@/components/ui/label";
 import { api } from "@/lib/api";
 
@@ -30,9 +31,14 @@ export default function SignupPage() {
       <p className="mt-1 text-sm text-muted-foreground">Set up takes about 10 minutes. You&apos;ll connect WhatsApp in the next steps.</p>
       <form onSubmit={submit} className="mt-8 space-y-4">
         <Field label="Business name"><Input name="restaurantName" required minLength={2} placeholder="e.g. Saffron & Slice or Corner Pharmacy" /></Field>
+        <Field label="Type of business" hint="Helps the AI talk like your shop. You can change it later.">
+          <NativeSelect name="businessType" defaultValue="restaurant" required>
+            {BUSINESS_TYPES.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
+          </NativeSelect>
+        </Field>
         <Field label="Your name"><Input name="name" required minLength={2} autoComplete="name" /></Field>
         <Field label="Email"><Input name="email" type="email" required autoComplete="email" /></Field>
-        <Field label="Password" hint="At least 10 characters, with letters and numbers."><Input name="password" type="password" required minLength={10} autoComplete="new-password" /></Field>
+        <Field label="Password" hint="At least 10 characters, with letters and numbers."><PasswordInput name="password" required minLength={10} autoComplete="new-password" /></Field>
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{error}</p>}
         <Button type="submit" className="w-full" loading={loading}>Create account</Button>
       </form>

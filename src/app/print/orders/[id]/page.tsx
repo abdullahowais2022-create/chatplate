@@ -12,7 +12,7 @@ export default async function PrintOrder({ params }: { params: Promise<{ id: str
   const o = await getOrder(s.restaurantId, (await params).id);
   const m = (n: number) => money(n, o.currency);
   return (
-    <div className="mx-auto w-[80mm] bg-white p-3 font-mono text-[13px] leading-snug text-black">
+    <div className="mx-auto w-[80mm] bg-[#fff] p-3 font-mono text-[13px] leading-snug text-black">
       <PrintButton />
       <p className="text-center text-base font-bold">{o.restaurant.name}</p>
       {o.restaurant.address && <p className="text-center text-xs">{o.restaurant.address}</p>}

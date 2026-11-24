@@ -1,14 +1,12 @@
 import "server-only";
-import { promises as fs } from "node:fs";
-import path from "node:path";
+import { db } from "./db";
 import { env } from "./env";
 
 /**
- * File storage. Supabase Storage in production (private bucket for voice notes, public bucket for
- * logos and menu images). Falls back to ./storage on local disk for development.
+ * File storage. Uses Supabase Storage when it is configured (private bucket for voice notes, public
+ * bucket for logos and product photos). Otherwise files are kept in the database (StoredFile), which
+ * works everywhere, including Vercel where the filesystem is read-only.
  */
-const LOCAL_ROOT = path.join(process.cwd(), "storage");
-
 function supabase() {
   const e = env();
   return e.SUPABASE_URL && e.SUPABASE_SERVICE_ROLE_KEY
@@ -17,25 +15,29 @@ function supabase() {
 }
 
 function safeKey(key: string) {
-  if (key.includes("..") || key.startsWith("/")) throw new Error("Invalid storage key");
+  if (key.includes("..") || key.startsWith("/") || !/^[\w./-]+$/.test(key)) throw new Error("Invalid storage key");
   return key;
 }
 
 async function upload(bucket: string, key: string, data: Buffer, contentType: string) {
+  const k = safeKey(key);
   const sb = supabase();
   if (!sb) {
-    const file = path.join(LOCAL_ROOT, bucket, safeKey(key));
-    await fs.mkdir(path.dirname(file), { recursive: true });
-    await fs.writeFile(file, data);
-    await fs.writeFile(`${file}.meta`, contentType);
+    const row = { bucket, contentType, size: data.length, data: new Uint8Array(data) };
+    await db.storedFile.upsert({ where: { key: `${bucket}/${k}` }, create: { key: `${bucket}/${k}`, ...row }, update: row });
     return;
   }
-  const res = await fetch(`${sb.url}/storage/v1/object/${bucket}/${safeKey(key)}`, {
+  const res = await fetch(`${sb.url}/storage/v1/object/${bucket}/${k}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${sb.key}`, "Content-Type": contentType, "x-upsert": "true" },
     body: new Uint8Array(data),
   });
   if (!res.ok) throw new Error(`Storage upload failed (${res.status}): ${await res.text()}`);
+}
+
+async function readFromDb(bucket: string, key: string) {
+  const row = await db.storedFile.findUnique({ where: { key: `${bucket}/${safeKey(key)}` } });
+  return row ? { data: Buffer.from(row.data), contentType: row.contentType } : null;
 }
 
 export async function putPrivate(key: string, data: Buffer, contentType: string) {
@@ -46,15 +48,7 @@ export async function putPrivate(key: string, data: Buffer, contentType: string)
 export async function getPrivate(key: string): Promise<{ data: Buffer; contentType: string } | null> {
   const bucket = env().SUPABASE_PRIVATE_BUCKET;
   const sb = supabase();
-  if (!sb) {
-    const file = path.join(LOCAL_ROOT, bucket, safeKey(key));
-    try {
-      const [data, contentType] = await Promise.all([fs.readFile(file), fs.readFile(`${file}.meta`, "utf8")]);
-      return { data, contentType };
-    } catch {
-      return null;
-    }
-  }
+  if (!sb) return readFromDb(bucket, key);
   const res = await fetch(`${sb.url}/storage/v1/object/${bucket}/${safeKey(key)}`, {
     headers: { Authorization: `Bearer ${sb.key}` },
   });
@@ -70,12 +64,7 @@ export async function putPublic(key: string, data: Buffer, contentType: string):
   return sb ? `${sb.url}/storage/v1/object/public/${bucket}/${key}` : `/api/media/public/${key}`;
 }
 
-export async function getLocalPublic(key: string) {
-  const file = path.join(LOCAL_ROOT, env().SUPABASE_PUBLIC_BUCKET, safeKey(key));
-  try {
-    const [data, contentType] = await Promise.all([fs.readFile(file), fs.readFile(`${file}.meta`, "utf8")]);
-    return { data, contentType };
-  } catch {
-    return null;
-  }
+/** Reads a public asset stored in the database (served by /api/media/public/...). */
+export async function getStoredPublic(key: string) {
+  return readFromDb(env().SUPABASE_PUBLIC_BUCKET, key);
 }

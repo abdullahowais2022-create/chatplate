@@ -19,6 +19,7 @@ export type SessionUser = {
   role: Role;
   restaurantId: string;
   restaurantName: string;
+  businessType: string;
   restaurantLogoUrl: string | null;
   onboardingCompleted: boolean;
   isDemo: boolean;
@@ -70,6 +71,7 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
     role: user.role,
     restaurantId: user.restaurantId,
     restaurantName: user.restaurant.name,
+    businessType: user.restaurant.businessType,
     restaurantLogoUrl: user.restaurant.logoUrl,
     onboardingCompleted: Boolean(user.restaurant.onboardingCompletedAt),
     isDemo: user.restaurant.isDemo,

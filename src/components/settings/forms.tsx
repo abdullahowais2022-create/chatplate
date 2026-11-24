@@ -8,6 +8,8 @@ import { Input, NativeSelect, Textarea } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
 import { SwitchRow, Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
+import { uploadImage } from "@/lib/image";
+import { BUSINESS_TYPES } from "@/lib/business";
 import { DAYS, LANGUAGES, PAYMENT_LABEL } from "@/lib/constants";
 import { PAYMENT_METHODS } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
@@ -37,18 +39,20 @@ const TIMEZONES = typeof Intl.supportedValuesOf === "function" ? Intl.supportedV
 
 export function ProfileForm({ settings, onSaved, submitLabel = "Save", readOnly }: FormProps) {
   const [f, setF] = useState({
-    name: settings.name, logoUrl: settings.logoUrl ?? "", address: settings.address ?? "", phone: settings.phone ?? "", email: settings.email ?? "",
+    name: settings.name, businessType: settings.businessType, logoUrl: settings.logoUrl ?? "", address: settings.address ?? "", phone: settings.phone ?? "", email: settings.email ?? "",
     timezone: settings.timezone, currency: settings.currency, latitude: settings.latitude?.toString() ?? "", longitude: settings.longitude?.toString() ?? "",
   });
   const { busy, save } = useSave(onSaved);
   const [uploading, setUploading] = useState(false);
   const set = (k: keyof typeof f, v: string) => setF((s) => ({ ...s, [k]: v }));
   const upload = async (file: File) => {
-    const form = new FormData();
-    form.append("file", file);
     setUploading(true);
     try {
-      set("logoUrl", (await api<{ url: string }>("/api/uploads", { form })).url);
+      const logoUrl = await uploadImage(file, 512);
+      set("logoUrl", logoUrl);
+      // Save straight away so the new logo isn't lost if the page is left without pressing Save.
+      await api("/api/settings/profile", { method: "PUT", body: { ...f, logoUrl, latitude: f.latitude ? Number(f.latitude) : null, longitude: f.longitude ? Number(f.longitude) : null } });
+      toast.success("Logo updated");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -64,11 +68,16 @@ export function ProfileForm({ settings, onSaved, submitLabel = "Save", readOnly 
         </div>
         <label className="cursor-pointer rounded-lg border bg-card px-3 py-1.5 text-sm font-medium hover:bg-muted">
           {uploading ? "Uploading…" : "Upload logo"}
-          <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={readOnly} onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
+          <input type="file" accept="image/*" className="hidden" disabled={readOnly || uploading} onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; if (file) void upload(file); }} />
         </label>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Business name"><Input required value={f.name} onChange={(e) => set("name", e.target.value)} disabled={readOnly} /></Field>
+        <Field label="Type of business">
+          <NativeSelect value={f.businessType} onChange={(e) => set("businessType", e.target.value)} disabled={readOnly}>
+            {BUSINESS_TYPES.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
+          </NativeSelect>
+        </Field>
         <Field label="Phone"><Input value={f.phone} onChange={(e) => set("phone", e.target.value)} disabled={readOnly} placeholder="+1 555 0100" /></Field>
         <Field label="Address" className="sm:col-span-2" hint="Shared with customers for pickup orders."><Input value={f.address} onChange={(e) => set("address", e.target.value)} disabled={readOnly} /></Field>
         <Field label="Email"><Input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} disabled={readOnly} /></Field>

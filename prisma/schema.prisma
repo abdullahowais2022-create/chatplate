@@ -162,6 +162,8 @@ model Restaurant {
   id                 String   @id @default(cuid())
   name               String
   slug               String   @unique
+  /// What kind of business this is (restaurant, grocery, pharmacy, retail…). Drives wording and AI context.
+  businessType       String   @default("restaurant")
   logoUrl            String?
   address            String?
   phone              String?
@@ -244,6 +246,10 @@ model WhatsAppAccount {
   accessTokenEnc     String?
   appSecretEnc       String?
   verifyToken        String
+  /// "manual" (credentials pasted in) or "embedded" (connected with Meta's one-click signup).
+  connectionMethod   String         @default("manual")
+  /// Two-step verification PIN set when TillText registers the number on the Cloud API (encrypted).
+  registrationPinEnc String?
   /// Public, unguessable path segment for this restaurant's webhook URL (not an internal id).
   webhookKey         String         @unique
   status             WhatsAppStatus @default(NOT_CONNECTED)
@@ -691,4 +697,19 @@ model Notification {
 
   @@index([restaurantId, createdAt])
   @@index([restaurantId, readAt])
+}
+
+// ───────────────────────────── Files ─────────────────────────────
+
+/// File storage used when no external object store (Supabase) is configured, e.g. on Vercel where the
+/// filesystem is read-only. Holds logos, product photos and voice notes.
+model StoredFile {
+  key         String   @id
+  bucket      String
+  contentType String
+  size        Int
+  data        Bytes
+  createdAt   DateTime @default(now())
+
+  @@index([bucket])
 }

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/server/auth/session";
 import { Logo } from "@/components/brand";
 import { MessageCircle, Languages, ClipboardCheck } from "lucide-react";
+import { ThemeSwitch } from "@/components/theme";
 
 // Always render per request (auth, live data, and setup checks).
 export const dynamic = "force-dynamic";
@@ -12,13 +13,14 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   if (await getSession()) redirect("/dashboard");
   return (
     <div className="grid grid-cols-1 min-h-screen lg:grid-cols-2">
-      <div className="flex flex-col justify-center px-6 py-12 sm:px-12">
+      <div className="relative flex flex-col justify-center px-6 py-12 sm:px-12">
+        <ThemeSwitch className="absolute right-4 top-4" />
         <div className="mx-auto w-full max-w-sm">
           <Logo className="mb-10" markClassName="h-9 w-9" />
           {children}
         </div>
       </div>
-      <div className="relative hidden overflow-hidden bg-gradient-to-br from-brand-500 to-brand-700 lg:flex lg:flex-col lg:justify-center lg:px-16 text-white">
+      <div className="relative hidden overflow-hidden bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-700 dark:to-brand-900 lg:flex lg:flex-col lg:justify-center lg:px-16 text-white">
         <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/10" />
         <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-white/5" />
         <h2 className="relative text-4xl font-bold leading-tight">Your orders,<br />straight from WhatsApp.</h2>

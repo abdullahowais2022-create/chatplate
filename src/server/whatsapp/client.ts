@@ -47,7 +47,7 @@ export function explainMetaError(code?: number, fallback?: string): string {
   }
 }
 
-async function graphFetch<T>(creds: WhatsAppCredentials, path: string, init: RequestInit = {}): Promise<T> {
+export async function graphFetch<T>(creds: WhatsAppCredentials, path: string, init: RequestInit = {}): Promise<T> {
   let lastErr: unknown;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {

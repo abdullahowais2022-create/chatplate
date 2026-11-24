@@ -29,7 +29,7 @@ export const GET = route<Ctx>(async (_req, { params }) => {
     `Subtotal: ${m(o.subtotal)}`,
     ...(o.type === "DELIVERY" ? [`Delivery: ${m(o.deliveryFee)}`] : []),
     `TOTAL: ${m(o.total)}`,
-    `Payment: ${PAYMENT_LABEL[o.paymentPreference]} (collected by restaurant)`,
+    `Payment: ${PAYMENT_LABEL[o.paymentPreference]} (collected by the business)`,
     "----------------------------------------",
     `Customer: ${o.customerName ?? "—"}  ${o.customer.phone}`,
     ...(o.type === "DELIVERY" ? [`Address: ${o.deliveryAddress ?? (o.deliveryLocation ? `pin ${o.deliveryLocation.lat},${o.deliveryLocation.lng}` : "—")}`] : []),

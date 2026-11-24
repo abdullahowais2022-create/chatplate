@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(({ className, type, ...props }, ref) => (
@@ -13,6 +14,27 @@ const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
   />
 ));
 Input.displayName = "Input";
+
+/** Password field with a button that shows or hides what was typed. */
+const PasswordInput = React.forwardRef<HTMLInputElement, Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">>(({ className, ...props }, ref) => {
+  const [visible, setVisible] = React.useState(false);
+  return (
+    <div className="relative">
+      <Input ref={ref} type={visible ? "text" : "password"} className={cn("pr-10", className)} autoCapitalize="none" autoCorrect="off" spellCheck={false} {...props} />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-lg text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={visible ? "Hide password" : "Show password"}
+        aria-pressed={visible}
+        title={visible ? "Hide password" : "Show password"}
+      >
+        {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+});
+PasswordInput.displayName = "PasswordInput";
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(({ className, ...props }, ref) => (
   <textarea
@@ -40,4 +62,4 @@ const NativeSelect = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttribu
 ));
 NativeSelect.displayName = "NativeSelect";
 
-export { Input, Textarea, NativeSelect };
+export { Input, PasswordInput, Textarea, NativeSelect };

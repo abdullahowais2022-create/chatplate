@@ -5,9 +5,10 @@ import { CheckCircle2, CircleAlert, CircleDashed, ExternalLink, RefreshCw, Send,
 import type { WhatsAppStatusDTO } from "@/server/services/queries";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { Input, PasswordInput } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
 import { CopyField } from "./forms";
+import { EmbeddedSignupButton } from "./embedded-signup";
 import { api } from "@/lib/api";
 import { formatDateTime, timeAgo } from "@/lib/utils";
 
@@ -65,6 +66,14 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
         </div>
       </div>
 
+      {s.embeddedSignup && s.status !== "CONNECTED" && <EmbeddedSignupButton config={s.embeddedSignup} onConnected={update} />}
+      {!s.embeddedSignup && s.status !== "CONNECTED" && (
+        <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+          One-click <b>Connect with Facebook</b> isn&apos;t switched on for this TillText server yet, so connect manually below. (Server admin: see &quot;One-click connect&quot; in docs/WHATSAPP_SETUP.md.)
+        </p>
+      )}
+
+      <ManualSetup open={!s.embeddedSignup && s.status !== "CONNECTED"} title={s.embeddedSignup ? "Connect manually instead (advanced)" : "Manual connection"}>
       <section className="space-y-3">
         <h3 className="font-semibold">1. Add these to your Meta app&apos;s webhook settings</h3>
         <p className="text-sm text-muted-foreground">In <a className="text-primary underline" href="https://developers.facebook.com/apps" target="_blank" rel="noreferrer">developers.facebook.com <ExternalLink className="inline h-3 w-3" /></a> → your app → WhatsApp → Configuration → Webhook → Edit. Then subscribe to the <b>messages</b> field.</p>
@@ -82,18 +91,19 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
           <Field label="WhatsApp Business Account ID"><Input value={f.wabaId} onChange={(e) => setF({ ...f, wabaId: e.target.value.trim() })} placeholder="1234567890" /></Field>
           <Field label="Phone Number ID"><Input value={f.phoneNumberId} onChange={(e) => setF({ ...f, phoneNumberId: e.target.value.trim() })} placeholder="1098765432" /></Field>
           <Field label="Permanent access token" hint={s.hasAccessToken ? "A token is saved. Leave empty to keep it." : "System User token with whatsapp_business_messaging permission."}>
-            <Input type="password" autoComplete="off" value={f.accessToken} onChange={(e) => setF({ ...f, accessToken: e.target.value })} placeholder={s.hasAccessToken ? "•••••••• (saved)" : "EAAG…"} />
+            <PasswordInput autoComplete="off" value={f.accessToken} onChange={(e) => setF({ ...f, accessToken: e.target.value })} placeholder={s.hasAccessToken ? "•••••••• (saved)" : "EAAG…"} />
           </Field>
           <Field label="App secret" hint={s.hasAppSecret ? "Saved. Leave empty to keep it." : "Meta app → Settings → Basic → App secret. Used to verify webhook signatures."}>
-            <Input type="password" autoComplete="off" value={f.appSecret} onChange={(e) => setF({ ...f, appSecret: e.target.value.trim() })} placeholder={s.hasAppSecret ? "•••••••• (saved)" : "32 characters"} />
+            <PasswordInput autoComplete="off" value={f.appSecret} onChange={(e) => setF({ ...f, appSecret: e.target.value.trim() })} placeholder={s.hasAppSecret ? "•••••••• (saved)" : "32 characters"} />
           </Field>
         </div>
         <p className="text-xs text-muted-foreground">Secrets are encrypted (AES-256-GCM) before they&apos;re stored and are never shown again.</p>
         <Button loading={busy === "save"} onClick={saveCreds} disabled={!f.wabaId || !f.phoneNumberId}>Save & verify</Button>
       </section>
+      </ManualSetup>
 
       <section className="space-y-3">
-        <h3 className="font-semibold">3. Send a test message</h3>
+        <h3 className="font-semibold">Send a test message</h3>
         <p className="text-sm text-muted-foreground">Sends Meta&apos;s approved <code>hello_world</code> template to any WhatsApp number.</p>
         <div className="flex gap-2">
           <Input value={testTo} onChange={(e) => setTestTo(e.target.value)} placeholder="+1 555 010 0000" className="max-w-xs" />
@@ -107,5 +117,19 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
         </div>
       )}
     </div>
+  );
+}
+
+/** Collapsible block for the manual (paste your own Meta credentials) connection method. */
+function ManualSetup({ open, title, children }: { open: boolean; title: string; children: React.ReactNode }) {
+  return (
+    <details open={open} className="group rounded-xl border p-4 [&_summary::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold">
+        {title}
+        <span className="text-xs font-normal text-muted-foreground group-open:hidden">Show</span>
+        <span className="hidden text-xs font-normal text-muted-foreground group-open:inline">Hide</span>
+      </summary>
+      <div className="mt-4 space-y-6">{children}</div>
+    </details>
   );
 }

@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ImagePlus, Languages, Pencil, Plus, Search, Trash2, UtensilsCrossed, X } from "lucide-react";
+import { Sparkles, ImagePlus, Languages, Pencil, Plus, Search, Trash2, UtensilsCrossed, X } from "lucide-react";
 import type { MenuCategoryDTO, MenuItemDTO } from "@/server/services/queries";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,8 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { api } from "@/lib/api";
+import { uploadImage } from "@/lib/image";
+import { AiCatalogImport } from "@/components/ai-catalog-import";
 import { DIETARY_TAGS } from "@/lib/schemas";
 import { cn, money } from "@/lib/utils";
 
@@ -22,13 +24,14 @@ const TRANSLATION_LANGS = [
 ];
 const TAG_LABEL: Record<string, string> = { vegetarian: "🥬 Vegetarian", vegan: "🌱 Vegan", gluten_free: "Gluten-free", halal: "Halal", spicy: "🌶 Spicy", contains_nuts: "🥜 Contains nuts", dairy_free: "Dairy-free" };
 
-type Props = { menu: MenuCategoryDTO[]; currency: string; canEdit: boolean };
+type Props = { menu: MenuCategoryDTO[]; currency: string; canEdit: boolean; title?: string };
 
-export function MenuManager({ menu, currency, canEdit }: Props) {
+export function MenuManager({ menu, currency, canEdit, title = "Products" }: Props) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [activeCat, setActiveCat] = useState<string | "all">("all");
   const [editing, setEditing] = useState<{ item: Partial<MenuItemDTO> | null; open: boolean }>({ item: null, open: false });
+  const [aiOpen, setAiOpen] = useState(false);
   const [catDialog, setCatDialog] = useState<{ open: boolean; cat: Partial<MenuCategoryDTO> | null }>({ open: false, cat: null });
 
   const filtered = useMemo(() => {
@@ -53,19 +56,34 @@ export function MenuManager({ menu, currency, canEdit }: Props) {
 
   return (
     <div className="mx-auto max-w-7xl">
+      <Dialog open={aiOpen} onOpenChange={setAiOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Set up your products with AI</DialogTitle>
+            <DialogDescription>Paste a price list, describe what you sell, or add a photo of your menu or price board. You review everything before it&apos;s saved.</DialogDescription>
+          </DialogHeader>
+          <AiCatalogImport currency={currency} onDone={() => { setAiOpen(false); router.refresh(); }} />
+        </DialogContent>
+      </Dialog>
       <PageHeader
-        title="Menu & products"
+        title={title}
         description="The AI only offers what's here: the exact names, prices, sizes and extras. Mark items sold out and the AI stops accepting them instantly."
         actions={canEdit && (
           <>
+            <Button variant="outline" onClick={() => setAiOpen(true)}><Sparkles /> Set up with AI</Button>
             <Button variant="outline" onClick={() => setCatDialog({ open: true, cat: null })}><Plus /> Category</Button>
-            <Button onClick={() => setEditing({ open: true, item: { categoryId: activeCat !== "all" ? activeCat : menu[0]?.id } })} disabled={!menu.length}><Plus /> Menu item</Button>
+            <Button onClick={() => setEditing({ open: true, item: { categoryId: activeCat !== "all" ? activeCat : menu[0]?.id } })} disabled={!menu.length}><Plus /> Product</Button>
           </>
         )}
       />
 
       {menu.length === 0 ? (
-        <EmptyState icon={UtensilsCrossed} title="Your menu is empty" description="Start by adding a category (e.g. Pizza, Drinks), then add items with prices." action={canEdit && <Button onClick={() => setCatDialog({ open: true, cat: null })}><Plus /> Add first category</Button>} />
+        <EmptyState icon={UtensilsCrossed} title={`Your ${title.toLowerCase()} list is empty`} description="Start by adding a category (e.g. Pizza, Drinks, Fruit & veg, Skincare), then add items with prices." action={canEdit && (
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button onClick={() => setAiOpen(true)}><Sparkles /> Set up with AI</Button>
+              <Button variant="outline" onClick={() => setCatDialog({ open: true, cat: null })}><Plus /> Add a category</Button>
+            </div>
+          )} />
       ) : (
         <>
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center">
@@ -215,12 +233,9 @@ function ItemEditor({ item, categories, currency, onClose }: { item: Partial<Men
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((s) => ({ ...s, [k]: v }));
 
   const upload = async (file: File) => {
-    const form = new FormData();
-    form.append("file", file);
     setUploading(true);
     try {
-      const r = await api<{ url: string }>("/api/uploads", { form });
-      set("imageUrl", r.url);
+      set("imageUrl", await uploadImage(file));
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -294,7 +309,7 @@ function ItemEditor({ item, categories, currency, onClose }: { item: Partial<Men
             </div>
             <label className="block cursor-pointer rounded-md border bg-card px-2 py-1 text-center text-xs font-medium hover:bg-muted">
               {uploading ? "Uploading…" : "Upload photo"}
-              <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; if (file) void upload(file); }} />
             </label>
           </div>
         </div>

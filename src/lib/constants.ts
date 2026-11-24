@@ -16,7 +16,7 @@ export const PAYMENT_LABEL: Record<string, string> = {
   CARD_ON_DELIVERY: "Card on delivery",
   CARD_AT_PICKUP: "Card at pickup",
   BANK_TRANSFER: "Bank transfer",
-  PAY_AT_RESTAURANT: "Pay at restaurant",
+  PAY_AT_RESTAURANT: "Pay in store",
   UNKNOWN: "Not specified",
 };
 

@@ -1,4 +1,5 @@
 import "server-only";
+import { embeddedSignupConfig } from "../whatsapp/embedded";
 import type { CustomerTag, OrderStatus, Prisma } from "@prisma/client";
 import { db } from "../db";
 import { decryptOrNull } from "../crypto";
@@ -261,6 +262,7 @@ export async function getSettings(restaurantId: string) {
   });
   return {
     name: r.name,
+    businessType: r.businessType,
     logoUrl: r.logoUrl,
     address: r.address,
     phone: r.phone,
@@ -325,6 +327,9 @@ export async function getWhatsAppStatus(restaurantId: string, appUrl: string) {
     lastWebhookAt: acc.lastWebhookAt?.toISOString() ?? null,
     lastTestAt: acc.lastTestAt?.toISOString() ?? null,
     lastError: acc.lastError,
+    connectionMethod: acc.connectionMethod,
+    /** Settings for the one-click "Connect WhatsApp" button, or null when the platform hasn't enabled it. */
+    embeddedSignup: embeddedSignupConfig(),
   };
 }
 export type WhatsAppStatusDTO = NonNullable<Awaited<ReturnType<typeof getWhatsAppStatus>>>;

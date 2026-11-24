@@ -12,7 +12,11 @@ import { explainMetaError } from "./client";
  * within the timeout; duplicates from Meta retries are dropped here.
  */
 export async function ingestWebhook(account: WhatsAppAccount, body: unknown) {
-  const events = normalizeWebhook(body);
+  return ingestEvents(account, normalizeWebhook(body));
+}
+
+/** Stores and queues already-normalized events for one account (used by the shared platform webhook). */
+export async function ingestEvents(account: WhatsAppAccount, events: NormalizedEvent[]) {
   let queued = 0;
   for (const e of events) {
     if (account.phoneNumberId && e.phoneNumberId && e.phoneNumberId !== account.phoneNumberId) continue;

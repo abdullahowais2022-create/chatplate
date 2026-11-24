@@ -12,6 +12,11 @@ const schema = z.object({
   OPENAI_MODEL: z.string().default("gpt-4.1-mini"),
   OPENAI_TRANSCRIBE_MODEL: z.string().default("whisper-1"),
   META_GRAPH_API_VERSION: z.string().default("v21.0"),
+  // One-click WhatsApp connection (Meta Embedded Signup). Set once by whoever runs TillText.
+  META_APP_ID: z.string().optional(),
+  META_APP_SECRET: z.string().optional(),
+  META_EMBEDDED_SIGNUP_CONFIG_ID: z.string().optional(),
+  META_WEBHOOK_VERIFY_TOKEN: z.string().optional(),
   QSTASH_TOKEN: z.string().optional(),
   QSTASH_CURRENT_SIGNING_KEY: z.string().optional(),
   QSTASH_NEXT_SIGNING_KEY: z.string().optional(),

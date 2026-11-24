@@ -23,7 +23,7 @@ export const PUT = route(async (req) => {
   if (!input.appSecret && !acc.appSecretEnc) throw badRequest("The app secret is required to verify webhook signatures");
 
   const conflictAcc = await db.whatsAppAccount.findFirst({ where: { phoneNumberId: input.phoneNumberId, NOT: { id: acc.id } } });
-  if (conflictAcc) throw badRequest("This phone number is already connected to another restaurant");
+  if (conflictAcc) throw badRequest("This phone number is already connected to another business");
 
   let status: "PENDING_VERIFICATION" | "CONNECTED" | "ERROR" = "PENDING_VERIFICATION";
   let lastError: string | null = null;

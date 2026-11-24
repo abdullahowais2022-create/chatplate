@@ -8,7 +8,7 @@ type Ctx = { params: Promise<{ id: string }> };
 
 async function assertNotLastOwner(restaurantId: string, userId: string) {
   const owners = await db.user.count({ where: { restaurantId, role: "OWNER", isActive: true, deletedAt: null, NOT: { id: userId } } });
-  if (owners === 0) throw badRequest("A restaurant needs at least one active owner");
+  if (owners === 0) throw badRequest("A business needs at least one active owner");
 }
 
 export const PATCH = route<Ctx>(async (req, { params }) => {

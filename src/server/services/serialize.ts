@@ -31,6 +31,7 @@ export function toRestaurantFacts(r: RestaurantWithRelations): RestaurantFacts {
     pickupInstructions: r.pickupInstructions,
     deliveryInstructions: r.deliveryInstructions,
     prepTimeMinutes: r.prepTimeMinutes,
+    businessType: r.businessType,
     allowPreorders: r.allowPreorders,
     acceptedPaymentMethods: r.acceptedPaymentMethods.map((p) => p.toLowerCase() as PaymentValue).filter((p) => p !== "unknown"),
     askPaymentPreference: r.askPaymentPreference,

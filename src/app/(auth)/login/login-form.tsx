@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input, PasswordInput } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
 import { api } from "@/lib/api";
 
@@ -40,7 +40,7 @@ export function LoginForm({ demo }: { demo: boolean }) {
     <div className="mt-8 space-y-6">
       <form onSubmit={submit} className="space-y-4">
         <Field label="Email"><Input name="email" type="email" autoComplete="email" required placeholder="you@yourbusiness.com" /></Field>
-        <Field label="Password"><Input name="password" type="password" autoComplete="current-password" required /></Field>
+        <Field label="Password"><PasswordInput name="password" autoComplete="current-password" required /></Field>
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{error}</p>}
         <Button type="submit" className="w-full" loading={loading === "login"}>Sign in</Button>
       </form>

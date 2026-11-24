@@ -45,6 +45,8 @@ export type ZoneSnap = {
 
 export type RestaurantFacts = {
   name: string;
+  /** Kind of business (restaurant, grocery, pharmacy…); see src/lib/business.ts. */
+  businessType: string;
   address: string | null;
   phone: string | null;
   timezone: string;

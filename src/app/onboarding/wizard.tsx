@@ -5,10 +5,12 @@ import { useState } from "react";
 import { ArrowLeft, ArrowRight, Check, CreditCard, Clock, MessageCircle, PartyPopper, Store, Truck, UtensilsCrossed } from "lucide-react";
 import type { SettingsDTO, WhatsAppStatusDTO } from "@/server/services/queries";
 import { Logo } from "@/components/brand";
+import { ThemeSwitch } from "@/components/theme";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DeliveryForm, HoursForm, PaymentForm, ProfileForm } from "@/components/settings/forms";
 import { WhatsAppConnect } from "@/components/settings/whatsapp-connect";
+import { AiCatalogImport } from "@/components/ai-catalog-import";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +19,7 @@ const STEPS = [
   { title: "Opening hours", icon: Clock, description: "The AI never accepts orders or promises times outside these." },
   { title: "Delivery & pickup", icon: Truck, description: "Zones, fees and minimum order." },
   { title: "Payments", icon: CreditCard, description: "How customers pay you directly. No online payments." },
-  { title: "Menu & products", icon: UtensilsCrossed, description: "The AI only sells what's in your menu or product list." },
+  { title: "Products & menu", icon: UtensilsCrossed, description: "The AI only sells what's in your product list or menu." },
   { title: "Connect WhatsApp", icon: MessageCircle, description: "Link your WhatsApp Business number." },
   { title: "All set", icon: PartyPopper, description: "" },
 ];
@@ -27,6 +29,7 @@ export function Wizard({ settings, whatsapp, menuCount, canManageWhatsApp }: { s
   const [step, setStep] = useState(Math.min(settings.onboardingStep, STEPS.length - 1));
   const [wa, setWa] = useState(whatsapp);
   const [finishing, setFinishing] = useState(false);
+  const [items, setItems] = useState(menuCount);
 
   const go = async (n: number) => {
     setStep(n);
@@ -44,10 +47,13 @@ export function Wizard({ settings, whatsapp, menuCount, canManageWhatsApp }: { s
   const formProps = { settings, onSaved: next, submitLabel: "Save & continue" };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-brand-50/60 to-background">
+    <div className="min-h-screen bg-gradient-to-b from-brand-50/60 to-background dark:from-brand-900/20">
       <header className="flex items-center justify-between px-6 py-5">
         <Logo />
-        <Button variant="ghost" size="sm" onClick={finish} loading={finishing}>Skip setup</Button>
+        <div className="flex items-center gap-2">
+          <ThemeSwitch />
+          <Button variant="ghost" size="sm" onClick={finish} loading={finishing}>Skip setup</Button>
+        </div>
       </header>
       <div className="mx-auto grid grid-cols-1 max-w-6xl gap-8 px-4 pb-16 lg:grid-cols-[240px_1fr]">
         <ol className="flex gap-2 overflow-x-auto lg:flex-col">
@@ -74,10 +80,11 @@ export function Wizard({ settings, whatsapp, menuCount, canManageWhatsApp }: { s
             {step === 3 && <PaymentForm {...formProps} />}
             {step === 4 && (
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">You have <b>{menuCount}</b> menu items. Add categories, items, sizes and add-ons in the menu manager. You can come back any time.</p>
-                <div className="flex flex-wrap gap-2">
-                  <Button asChild variant="outline"><Link href="/dashboard/menu" target="_blank"><UtensilsCrossed /> Open menu manager</Link></Button>
-                  <Button onClick={next}>{menuCount ? "Continue" : "I'll add it later"} <ArrowRight /></Button>
+                <p className="text-sm text-muted-foreground">You have <b>{items}</b> products. Let the AI build your list from a photo or a pasted price list, or add them one by one in the product manager.</p>
+                <AiCatalogImport currency={settings.currency} onDone={(n) => { setItems((x) => x + n); router.refresh(); }} />
+                <div className="flex flex-wrap gap-2 border-t pt-4">
+                  <Button asChild variant="outline"><Link href="/dashboard/menu" target="_blank"><UtensilsCrossed /> Open product manager</Link></Button>
+                  <Button onClick={next}>{items ? "Continue" : "I'll add them later"} <ArrowRight /></Button>
                 </div>
               </div>
             )}

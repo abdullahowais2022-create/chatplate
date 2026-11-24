@@ -20,7 +20,7 @@ export const POST = route(async (req) => {
     await audit({ restaurantId: user.restaurantId, actorType: "STAFF", actorUserId: user.id, action: "auth.login_failed", entityType: "User", entityId: user.id, ip });
     throw unauthorized("Incorrect email or password");
   }
-  if (!user.isActive) throw forbidden("Your account has been deactivated. Ask the restaurant owner to re-enable it.");
+  if (!user.isActive) throw forbidden("Your account has been deactivated. Ask the business owner to re-enable it.");
   await createSession(user.id, { ip, userAgent: req.headers.get("user-agent") ?? undefined });
   await audit({ restaurantId: user.restaurantId, actorType: "STAFF", actorUserId: user.id, action: "auth.login", entityType: "User", entityId: user.id, ip });
   return ok({ redirect: user.restaurant.onboardingCompletedAt ? "/dashboard" : "/onboarding" });

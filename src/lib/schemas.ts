@@ -1,3 +1,4 @@
+import { BUSINESS_TYPE_VALUES } from "./business";
 import { z } from "zod";
 
 // Shared request schemas (used by API routes for validation and by forms for types).
@@ -15,6 +16,7 @@ export const DIETARY_TAGS = ["vegetarian", "vegan", "gluten_free", "halal", "spi
 
 export const signupSchema = z.object({
   restaurantName: z.string().trim().min(2).max(100),
+  businessType: z.enum(BUSINESS_TYPE_VALUES).default("other"),
   name: z.string().trim().min(2).max(100),
   email: z.string().trim().toLowerCase().email(),
   password: z.string().min(10).max(200),
@@ -26,6 +28,7 @@ export const changePasswordSchema = z.object({ currentPassword: z.string().min(1
 
 export const profileSchema = z.object({
   name: z.string().trim().min(2).max(100),
+  businessType: z.enum(BUSINESS_TYPE_VALUES).optional(),
   logoUrl: optionalText(500),
   address: optionalText(300),
   phone: optionalText(40),

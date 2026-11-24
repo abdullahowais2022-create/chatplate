@@ -2,15 +2,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Bell, ClipboardList, FlaskConical, KeyRound, LayoutDashboard, LogOut, Menu, MessagesSquare, Settings, Store, Users, UtensilsCrossed, X, Sparkles, CheckCheck } from "lucide-react";
+import { Package, Bell, ClipboardList, FlaskConical, KeyRound, LayoutDashboard, LogOut, Menu, MessagesSquare, Settings, Store, Users, UtensilsCrossed, X, Sparkles, CheckCheck } from "lucide-react";
 import { Logo } from "@/components/brand";
 import { Avatar } from "@/components/ui/misc";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useLive } from "./live";
+import { ThemeSwitch } from "@/components/theme";
 import { can, type Permission, type RoleName } from "@/lib/permissions";
 import { api } from "@/lib/api";
 import { cn, timeAgo } from "@/lib/utils";
+import { businessInfo, catalogLabel } from "@/lib/business";
 
 const NAV: { href: string; label: string; icon: typeof LayoutDashboard; perm: Permission; badge?: "attention" }[] = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, perm: "overview:read" },
@@ -23,7 +25,7 @@ const NAV: { href: string; label: string; icon: typeof LayoutDashboard; perm: Pe
   { href: "/dashboard/settings", label: "Settings", icon: Settings, perm: "orders:read" },
 ];
 
-type ShellUser = { name: string; email: string; role: RoleName; restaurantName: string; isDemo: boolean };
+type ShellUser = { name: string; email: string; role: RoleName; restaurantName: string; restaurantLogoUrl?: string | null; businessType: string; isDemo: boolean };
 
 export function DashboardShell({ user, children }: { user: ShellUser; children: React.ReactNode }) {
   const pathname = usePathname();
@@ -32,7 +34,8 @@ export function DashboardShell({ user, children }: { user: ShellUser; children: 
 
   const nav = (
     <nav className="flex flex-1 flex-col gap-1 p-3">
-      {NAV.filter((n) => can(user.role, n.perm)).map((n) => {
+      {NAV.filter((n) => can(user.role, n.perm)).map((item) => {
+        const n = item.href === "/dashboard/menu" ? { ...item, label: catalogLabel(user.businessType), icon: businessInfo(user.businessType).food ? UtensilsCrossed : Package } : item;
         const active = n.href === "/dashboard" ? pathname === n.href : pathname.startsWith(n.href);
         return (
           <Link
@@ -61,8 +64,18 @@ export function DashboardShell({ user, children }: { user: ShellUser; children: 
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r bg-card lg:flex">
         <div className="flex h-16 items-center border-b px-5"><Logo /></div>
         <div className="border-b px-5 py-3">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Business</p>
-          <p className="truncate font-semibold">{user.restaurantName}</p>
+          <div className="flex items-center gap-3">
+            {user.restaurantLogoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.restaurantLogoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg border object-cover" />
+            ) : (
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-sm font-bold text-brand-700">{user.restaurantName.slice(0, 1).toUpperCase()}</span>
+            )}
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Business</p>
+              <p className="truncate font-semibold">{user.restaurantName}</p>
+            </div>
+          </div>
         </div>
         {nav}
         <div className="border-t p-3 text-xs text-muted-foreground">Payments are collected by your business directly. TillText never processes payments.</div>
@@ -88,6 +101,7 @@ export function DashboardShell({ user, children }: { user: ShellUser; children: 
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen(true)} aria-label="Open menu"><Menu /></Button>
           <div className="lg:hidden"><Logo markClassName="h-7 w-7" /></div>
           <div className="flex-1" />
+          <ThemeSwitch className="hidden sm:inline-flex" />
           <NotificationBell count={live.unreadNotifications} />
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg p-1 pr-2 hover:bg-muted">
@@ -101,6 +115,7 @@ export function DashboardShell({ user, children }: { user: ShellUser; children: 
               <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild><Link href="/dashboard/settings?tab=account"><KeyRound /> Change password</Link></DropdownMenuItem>
+              <div className="flex items-center justify-between px-2 py-1.5 text-sm sm:hidden"><span>Theme</span><ThemeSwitch /></div>
               <DropdownMenuItem
                 onSelect={async () => {
                   await api("/api/auth/logout", { method: "POST" }).catch(() => undefined);

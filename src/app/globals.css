@@ -30,6 +30,32 @@
     --radius: 0.75rem;
     --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Noto Sans Arabic", "Noto Sans Devanagari", sans-serif;
   }
+  .dark {
+    --background: 24 10% 7%;
+    --foreground: 30 15% 93%;
+    --card: 24 9% 10%;
+    --card-foreground: 30 15% 93%;
+    --popover: 24 9% 11%;
+    --popover-foreground: 30 15% 93%;
+    --primary: 21 90% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 24 8% 16%;
+    --secondary-foreground: 30 15% 90%;
+    --muted: 24 8% 14%;
+    --muted-foreground: 30 8% 66%;
+    --accent: 21 40% 16%;
+    --accent-foreground: 24 95% 75%;
+    --destructive: 0 70% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 55% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 30 15% 9%;
+    --border: 24 8% 19%;
+    --input: 24 8% 24%;
+    --ring: 21 90% 55%;
+    color-scheme: dark;
+  }
   * {
     @apply border-border;
   }
@@ -48,7 +74,35 @@
     background-image: radial-gradient(rgba(227, 84, 19, 0.05) 1px, transparent 1px);
     background-size: 18px 18px;
   }
+  .dark .chat-bg {
+    background-color: #17120e;
+    background-image: radial-gradient(rgba(251, 138, 60, 0.07) 1px, transparent 1px);
+  }
 }
+
+/*
+ * Dark mode for the few places that use fixed Tailwind colours (chat bubbles, status pills, notices).
+ * Mapping them here keeps components simple and guarantees readable contrast in both themes.
+ */
+.dark .bg-white { background-color: hsl(var(--card)); }
+.dark .bg-white\/70, .dark .bg-white\/80 { background-color: hsl(var(--card) / 0.85); }
+.dark .bg-\[\#fde6d4\] { background-color: #4a2614; }
+.dark .bg-\[\#7a2e10\] { background-color: #3a1a0b; }
+.dark .text-ink { color: hsl(var(--foreground)); }
+.dark .bg-brand-50 { background-color: #2c1a10; }
+.dark .text-brand-700, .dark .text-brand-800 { color: #fdac74; }
+.dark .border-brand-200 { border-color: #5a3018; }
+.dark .bg-amber-50, .dark .bg-amber-100 { background-color: #2b2110; }
+.dark .text-amber-700, .dark .text-amber-800, .dark .text-amber-900, .dark .text-amber-900\/90 { color: #f5cf7a; }
+.dark .border-amber-200 { border-color: #5c4516; }
+.dark .bg-red-50, .dark .bg-red-100 { background-color: #2e1414; }
+.dark .text-red-600, .dark .text-red-700 { color: #fca5a5; }
+.dark .bg-emerald-50, .dark .bg-emerald-100 { background-color: #10261c; }
+.dark .text-emerald-700, .dark .text-emerald-800 { color: #86efac; }
+.dark .bg-sky-50, .dark .bg-sky-100 { background-color: #0f2130; }
+.dark .text-sky-600, .dark .text-sky-700, .dark .text-sky-800 { color: #7dd3fc; }
+.dark .bg-violet-100 { background-color: #221a36; }
+.dark .text-violet-800 { color: #c4b5fd; }
 
 @media print {
   .no-print {
@@ -58,3 +112,9 @@
     background: white;
   }
 }
+.dark .bg-amber-50\/60 { background-color: rgb(43 33 16 / 0.7); }
+.dark .bg-brand-50\/60, .dark .bg-brand-50\/70 { background-color: rgb(44 26 16 / 0.75); }
+.dark .bg-brand-100 { background-color: #3a2213; }
+.dark .bg-brand-200 { background-color: #4a2a16; }
+.dark .border-brand-300 { border-color: #7a3f1c; }
+.dark .text-brand-600 { color: #fb8a3c; }

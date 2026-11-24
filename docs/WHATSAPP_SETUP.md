@@ -1,6 +1,46 @@
-# Connecting a restaurant's WhatsApp Business number
+# Connecting a business's WhatsApp number
 
-TillText uses the official **Meta WhatsApp Cloud API**. Each restaurant connects its own number, Meta app and credentials. Nothing is shared between restaurants.
+TillText uses the official **Meta WhatsApp Cloud API**. There are two ways for a business to connect:
+
+- **One-click connect (recommended).** The business owner presses **Connect with Facebook** in TillText, logs in to Facebook in Meta's own window, picks or creates their WhatsApp Business account and verifies their number with an SMS code. TillText then sets up the webhook, permissions and number registration automatically. This needs a **one-time setup by whoever runs TillText** (you), described in the next section.
+- **Manual connect.** The business creates its own Meta app and pastes the credentials into TillText (sections 0–6 below). Always available as a fallback.
+
+## One-click connect: one-time setup for the TillText owner
+
+You do this once. After it, every business that signs up connects WhatsApp by itself in about 2 minutes.
+
+Meta only lets approved platforms ("Tech Providers") offer one-click signup, so this part includes a Meta review. Allow a few days for Meta's checks.
+
+1. **Meta Business account.** At business.facebook.com, create (or use) the business account for TillText itself and complete **Business verification** (Settings → Security Center). Meta requires this before other businesses can connect through you.
+2. **Create TillText's Meta app.** developers.facebook.com/apps → **Create app** → use case **Other** → type **Business** → attach it to the business above. Add the **WhatsApp** product.
+3. **Become a Tech Provider.** In the app dashboard: WhatsApp → **Quickstart / Getting started** → follow "Become a Tech Provider" (this is where Meta asks for business verification and app review).
+4. **Facebook Login for Business.** Add the product **Facebook Login for Business** → Settings:
+   - Allowed domains for the JavaScript SDK: your TillText domain (e.g. `chatplate.vercel.app`).
+   - Valid OAuth redirect URIs: `https://YOUR-DOMAIN/`.
+   - Then **Configurations → Create configuration** → choose the **WhatsApp Embedded Signup** template, select the permissions `whatsapp_business_management` and `whatsapp_business_messaging`, and save. Copy the **Configuration ID**.
+5. **App review.** Request **Advanced access** for `whatsapp_business_management` and `whatsapp_business_messaging` (App Review → Permissions and features). Meta asks for a short screen recording: record a business connecting through TillText's **Connect with Facebook** button and sending a test message.
+6. **Webhook (one URL for all businesses).** WhatsApp → Configuration → Webhook → Edit:
+   - Callback URL: `https://YOUR-DOMAIN/api/webhooks/whatsapp`
+   - Verify token: any long random text. Put the same text in `META_WEBHOOK_VERIFY_TOKEN` (step 7). Set the variable and redeploy *before* you click **Verify and save**.
+   - Subscribe to the **messages** field.
+7. **Add these to Vercel** (Project → Settings → Environment Variables), then redeploy:
+
+   | Name | Where to find it |
+   |---|---|
+   | `META_APP_ID` | App dashboard → App settings → Basic → App ID |
+   | `META_APP_SECRET` | Same page → App secret (click Show) |
+   | `META_EMBEDDED_SIGNUP_CONFIG_ID` | The Configuration ID from step 4 |
+   | `META_WEBHOOK_VERIFY_TOKEN` | The random text you chose in step 6 |
+
+Once these are set, **Settings → WhatsApp** and the onboarding wizard show the blue **Connect with Facebook** button instead of the manual form. Until Meta approves your app (steps 3 and 5), only people with a role on your Meta app (admins, developers, testers) can complete the popup, which is handy for testing.
+
+What TillText does after the popup closes: it swaps Meta's one-time code for a long-lived business token, confirms that token really controls the chosen number, subscribes your app to that business's webhooks, registers the number on the Cloud API with a random two-step PIN, and stores the token and PIN encrypted. Webhooks for every connected business arrive at the single URL from step 6, are checked against `META_APP_SECRET`, and are routed to the right business by phone number.
+
+---
+
+# Manual connection
+
+Each business can instead connect its own number, Meta app and credentials. Nothing is shared between businesses.
 
 Allow about 30 minutes, plus Meta's review times.
 

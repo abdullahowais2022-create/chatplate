@@ -7,7 +7,10 @@
 - 🚫 **No customer website.** The whole customer experience happens inside WhatsApp.
 - 🚫 **No online payments.** The restaurant collects payment itself. TillText only records a *preference* (cash, card on delivery, and so on) and never asks for card details or sends payment links.
 
-| Overview | Live inbox (Arabic voice-note order) | AI playground |
+| Overview | Live inbox (Arabic voice-note order) | AI setup | **Set up with AI**: paste a price list, describe what you sell or snap a photo of a menu or price board, and the AI drafts categories, products and prices for you to review |
+| Any business | Restaurants, cafés, groceries, pharmacies, shops and more. The business type changes the dashboard wording ("Menu" or "Products") and what the AI is told about the shop |
+| Look and feel | Light and dark mode (or follow the device), show/hide password buttons, mobile-friendly |
+| AI playground |
 |---|---|---|
 | ![Overview](docs/screenshots/overview.png) | ![Inbox](docs/screenshots/inbox-arabic.png) | ![Playground](docs/screenshots/playground.png) |
 
@@ -17,7 +20,7 @@
 
 | Area | What you get |
 |---|---|
-| WhatsApp | Official Meta Cloud API, a per-restaurant webhook with HMAC signature verification, idempotent processing, retries with backoff, sent/delivered/read/failed tracking, interactive buttons and location requests |
+| WhatsApp | **One-click "Connect with Facebook"** (Meta Embedded Signup: TillText sets up the webhook, permissions and number registration automatically) or manual connection. Official Meta Cloud API, per-business webhooks with HMAC signature verification, idempotent processing, retries with backoff, sent/delivered/read/failed tracking, interactive buttons and location requests |
 | AI ordering | Text **and voice notes** (Whisper), automatic language detection, replies in the customer's language, menu-aware extraction, follow-up questions, an order summary before confirmation, modify/cancel while editable, "Talk to a human" at any time |
 | Safety | The model never writes prices: everything is validated and recomputed from the database. Sold-out and unknown items are rejected. Hours, zones, fees and minimums are enforced by code. Prompt-injection hardening, escalation rules and an abuse rate limit |
 | Dashboard | Overview and analytics, a WhatsApp-style live inbox (takeover, manual replies, AI suggestions, transcripts), orders (filters, one-click status, assign, print/download ticket, timeline), menu manager (variants, add-ons, sold out, translations, photos), customers, business settings, team and roles, audit log |
@@ -29,7 +32,7 @@
 
 Next.js 15 (App Router, TypeScript) · Tailwind CSS + shadcn/ui-style components (Radix) · PostgreSQL + Prisma 6 · OpenAI (structured outputs + Whisper) · Meta WhatsApp Cloud API · Upstash QStash (jobs) + Upstash Redis (rate limits) · Supabase Storage (voice notes and images) · Resend (optional email) · Vercel.
 
-Every external service except Postgres is **optional in development**. Without it, the app falls back to a local equivalent: in-process jobs, an in-memory rate limiter, local-disk storage, and a rule-based AI engine.
+Every external service except Postgres is **optional in development**. Without it, the app falls back to a local equivalent: in-process jobs, an in-memory rate limiter, database file storage, and a rule-based AI engine.
 
 ---
 
@@ -101,8 +104,8 @@ Go to **AI playground → Customer simulator** and type, for example, `2 large p
 4. **Demo data (optional).** Run `npm run db:seed` with `DATABASE_URL` pointing at production if you want the demo restaurant.
 5. **Queue (strongly recommended).** In Upstash, create QStash and set `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY` and `QSTASH_NEXT_SIGNING_KEY`. QStash calls `POST {APP_URL}/api/jobs` with signed requests and retries failures. Without it, jobs run after the response inside the same serverless invocation, which is fine at low volume but has no retries.
 6. **Rate limiting.** Create an Upstash Redis database and set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
-7. **Storage and email.** In Supabase Storage, create a **private** bucket `voice-notes` and a **public** bucket `public-media`, then set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Local-disk storage does **not** persist on Vercel. For email notifications (optional), set `RESEND_API_KEY` and `EMAIL_FROM` with a verified domain.
-8. **WhatsApp.** Follow [docs/WHATSAPP_SETUP.md](docs/WHATSAPP_SETUP.md) for each restaurant.
+7. **Storage and email (optional).** Without extra setup, logos, product photos and voice notes are stored in the database, which works on Vercel. For heavy use, create a **private** bucket `voice-notes` and a **public** bucket `public-media` in Supabase Storage and set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. For email notifications (optional), set `RESEND_API_KEY` and `EMAIL_FROM` with a verified domain.
+8. **WhatsApp.** To give businesses the one-click **Connect with Facebook** button, do the one-time Meta setup in [docs/WHATSAPP_SETUP.md](docs/WHATSAPP_SETUP.md#one-click-connect-one-time-setup-for-the-tilltext-owner) and set `META_APP_ID`, `META_APP_SECRET`, `META_EMBEDDED_SIGNUP_CONFIG_ID` and `META_WEBHOOK_VERIFY_TOKEN`. Without them, businesses connect manually with the same guide.
 
 The webhook and job routes run on the Node.js runtime. `/api/jobs` sets `maxDuration = 120`; on Vercel Hobby the cap is lower, so use a Pro plan for long voice-note transcriptions.
 

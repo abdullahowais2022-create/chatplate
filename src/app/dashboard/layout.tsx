@@ -19,7 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   ]);
   return (
     <LiveProvider initial={{ version: r.liveVersion, unreadNotifications, attention }}>
-      <DashboardShell user={{ name: s.name, email: s.email, role: s.role, restaurantName: s.restaurantName, isDemo: s.isDemo }}>{children}</DashboardShell>
+      <DashboardShell user={{ name: s.name, email: s.email, role: s.role, restaurantName: s.restaurantName, restaurantLogoUrl: s.restaurantLogoUrl, businessType: s.businessType, isDemo: s.isDemo }}>{children}</DashboardShell>
     </LiveProvider>
   );
 }

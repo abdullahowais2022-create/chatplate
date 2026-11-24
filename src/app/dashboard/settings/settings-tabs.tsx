@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input, NativeSelect } from "@/components/ui/input";
+import { Input, NativeSelect, PasswordInput } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
 import { Avatar } from "@/components/ui/misc";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -131,7 +131,7 @@ function TeamPanel({ me, team }: { me: { id: string; role: RoleName }; team: Mem
           <Field label="Role" hint={ROLE_HELP[f.role]}>
             <NativeSelect value={f.role} onChange={(e) => setF({ ...f, role: e.target.value as RoleName })}><option value="STAFF">Staff</option><option value="MANAGER">Manager</option><option value="OWNER">Owner</option></NativeSelect>
           </Field>
-          <Field label="Temporary password" hint="At least 10 characters with letters and numbers."><Input value={f.temporaryPassword} onChange={(e) => setF({ ...f, temporaryPassword: e.target.value })} /></Field>
+          <Field label="Temporary password" hint="At least 10 characters with letters and numbers."><PasswordInput autoComplete="new-password" value={f.temporaryPassword} onChange={(e) => setF({ ...f, temporaryPassword: e.target.value })} /></Field>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button loading={busy === "add"} onClick={async () => (await call("add", () => api("/api/team", { body: f }), `${f.name} added`)) && (setOpen(false), setF({ name: "", email: "", role: "STAFF", temporaryPassword: "" }))}>Add member</Button>
@@ -149,8 +149,8 @@ function PasswordPanel() {
     <Card>
       <CardHeader><CardTitle>Change password</CardTitle><CardDescription>Changing your password signs you out everywhere else.</CardDescription></CardHeader>
       <CardContent className="max-w-sm space-y-4">
-        <Field label="Current password"><Input type="password" autoComplete="current-password" value={f.currentPassword} onChange={(e) => setF({ ...f, currentPassword: e.target.value })} /></Field>
-        <Field label="New password" hint="At least 10 characters with letters and numbers."><Input type="password" autoComplete="new-password" value={f.newPassword} onChange={(e) => setF({ ...f, newPassword: e.target.value })} /></Field>
+        <Field label="Current password"><PasswordInput autoComplete="current-password" value={f.currentPassword} onChange={(e) => setF({ ...f, currentPassword: e.target.value })} /></Field>
+        <Field label="New password" hint="At least 10 characters with letters and numbers."><PasswordInput autoComplete="new-password" value={f.newPassword} onChange={(e) => setF({ ...f, newPassword: e.target.value })} /></Field>
         <Button
           loading={busy}
           onClick={async () => {

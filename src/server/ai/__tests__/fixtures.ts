@@ -54,6 +54,7 @@ export const menu: MenuSnapshot = {
 const allWeek = [0, 1, 2, 3, 4, 5, 6].map((d) => ({ dayOfWeek: d, openTime: "00:00", closeTime: "23:59", isClosed: false }));
 
 export const restaurant: RestaurantFacts = {
+  businessType: "restaurant",
   name: "Test Pizzeria",
   address: "1 Main St",
   phone: "+1 555 0100",

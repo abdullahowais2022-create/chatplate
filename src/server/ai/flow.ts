@@ -269,7 +269,7 @@ export function decide(ctx: PipelineContext, raw: RawExtraction, input: InboundI
     if (greeting && raw.intent === "other") {
       const custom = r.greetingMessage?.trim();
       const categories = ctx.menu.categories.map((c) => localName(c, lang)).join(", ");
-      facts.push(`Menu categories: ${categories}.`);
+      facts.push(`Catalogue categories: ${categories}.`);
       return done({ action: "greet", draftReply: custom || t(lang, "greeting", { restaurant: r.name }) });
     }
     if (raw.confidence < r.handoffConfidenceThreshold || raw.intent === "other") {
@@ -280,7 +280,7 @@ export function decide(ctx: PipelineContext, raw: RawExtraction, input: InboundI
       return done({ action: "clarify", clarificationAttempts: attempts, draftReply: t(lang, "clarify"), buttons: attempts >= 2 ? [humanButton] : null });
     }
     if (raw.intent === "question") {
-      facts.push(`Restaurant address: ${r.address ?? "not provided"}. Phone: ${r.phone ?? "not provided"}.`);
+      facts.push(`Business address: ${r.address ?? "not provided"}. Phone: ${r.phone ?? "not provided"}.`);
       return done({ action: "answer", draftReply: t(lang, "redirect", { restaurant: r.name }) });
     }
   }
@@ -369,7 +369,7 @@ export function decide(ctx: PipelineContext, raw: RawExtraction, input: InboundI
   if (r.pickupInstructions && draft.orderType === "pickup") facts.push(`Pickup instructions: ${r.pickupInstructions}`);
   if (r.paymentNote) facts.push(`Payment note: ${r.paymentNote}`);
   const totals = computeTotals(draft);
-  facts.push(`Order total: ${money(totals.total)}. Payment is collected by the restaurant directly; never ask for card details.`);
+  facts.push(`Order total: ${money(totals.total)}. Payment is collected by the business directly; never ask for card details.`);
   return done({
     action: "summary",
     state: "AWAITING_CONFIRMATION",
@@ -443,7 +443,7 @@ export function missingStep(ctx: PipelineContext, input: DraftOrder, lang: strin
       // Pin given but the zone can't be determined (restaurant has no coordinates): staff verifies the fee.
       draft.zoneId = null;
       draft.deliveryFee = 0;
-      flag = "Verify the delivery zone and fee (restaurant coordinates are not set)";
+      flag = "Verify the delivery zone and fee (business location coordinates are not set)";
     } else {
       draft.zoneId = null;
       draft.deliveryFee = 0;
@@ -499,7 +499,7 @@ function answerQuestions(ctx: PipelineContext, raw: RawExtraction, draft: DraftO
       case "delivery_area":
       case "delivery_fee": {
         if (!r.deliveryEnabled) {
-          facts.push("This restaurant does not offer delivery, only pickup.");
+          facts.push("This business does not offer delivery, only pickup.");
           replies.push(t(lang, "outsideZone") + (r.pickupEnabled ? ` ${t(lang, "offerPickup")}` : ""));
           break;
         }
@@ -526,7 +526,7 @@ function answerQuestions(ctx: PipelineContext, raw: RawExtraction, draft: DraftO
         const items = raw.items.map((i) => ctx.menu.items.find((m) => m.id === i.menu_item_id)).filter(Boolean);
         for (const i of items) {
           facts.push(
-            `Menu item "${i!.name}": ${i!.description ?? "no description"}. Dietary tags: ${i!.dietaryTags.join(", ") || "none listed"}. Price: ${
+            `Item "${i!.name}": ${i!.description ?? "no description"}. Dietary tags: ${i!.dietaryTags.join(", ") || "none listed"}. Price: ${
               i!.variants.length ? i!.variants.map((v) => `${v.name} ${money(v.price)}`).join(", ") : money(i!.price)
             }. ${i!.isSoldOut ? "SOLD OUT." : ""} Add-ons: ${i!.addons.map((a) => `${a.name} +${money(a.price)}`).join(", ") || "none"}.`,
           );
