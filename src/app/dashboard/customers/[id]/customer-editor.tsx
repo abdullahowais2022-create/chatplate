@@ -44,7 +44,7 @@ export function CustomerEditor({ customer, canEdit }: { customer: C; canEdit: bo
             {TAGS.map((t) => {
               const on = f.tags.includes(t.id);
               return (
-                <button key={t.id} disabled={!canEdit} title={t.hint} onClick={() => setF({ ...f, tags: on ? f.tags.filter((x) => x !== t.id) : [...f.tags, t.id] })} className={cn("rounded-full border px-2.5 py-1 text-xs", on ? (t.id === "BLOCKED" ? "border-red-500 bg-red-50 text-red-700" : "border-brand-500 bg-brand-50 text-brand-800") : "text-muted-foreground")}>
+                <button key={t.id} disabled={!canEdit} title={t.hint} onClick={() => setF({ ...f, tags: on ? f.tags.filter((x) => x !== t.id) : [...f.tags, t.id] })} className={cn("rounded-full border px-2.5 py-1 text-xs", on ? (t.id === "BLOCKED" ? "border-red-500 bg-red-50 text-red-700" : "border-foreground bg-muted text-foreground") : "text-muted-foreground")}>
                   {t.label}
                 </button>
               );

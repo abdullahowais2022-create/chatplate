@@ -16,7 +16,7 @@ export default async function SetupPage() {
       <p className="mt-2 text-muted-foreground">The app is deployed, but it can&apos;t start until these are fixed. After changing environment variables in Vercel, redeploy (Deployments → ⋯ → Redeploy).</p>
       <ul className="mt-8 space-y-3">
         {problems.map((p) => (
-          <li key={p.key + p.title} className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <li key={p.key + p.title} className="rounded-lg border border-amber-200 bg-amber-50 p-4">
             <p className="flex items-center gap-2 font-semibold text-amber-900"><AlertTriangle className="h-4 w-4" /> {p.title}</p>
             <p className="mt-1 text-sm text-amber-900/90">{p.fix}</p>
           </li>

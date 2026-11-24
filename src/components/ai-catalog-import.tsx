@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Camera, ImageIcon, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Camera, ImageIcon, Plus, ScanText, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
@@ -77,8 +77,7 @@ export function AiCatalogImport({ currency, onDone }: { currency: string; onDone
   if (draft) {
     return (
       <div className="space-y-4">
-        <div className="flex items-start gap-2 rounded-lg bg-accent p-3 text-sm text-accent-foreground">
-          <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
+        <div className="rounded-md bg-muted p-3 text-sm">
           <span>Check the names and prices ({currency}). Nothing is saved until you press <b>Add {count} products</b>. Prices showing 0 couldn&apos;t be read.</span>
         </div>
         <div className="max-h-[50vh] space-y-4 overflow-y-auto pr-1">
@@ -136,7 +135,7 @@ export function AiCatalogImport({ currency, onDone }: { currency: string; onDone
           </label>
         )}
       </div>
-      <Button onClick={read} loading={busy === "read"} disabled={!text.trim() && !image}><Sparkles /> Read it with AI</Button>
+      <Button onClick={read} loading={busy === "read"} disabled={!text.trim() && !image}><ScanText /> Read products</Button>
     </div>
   );
 }

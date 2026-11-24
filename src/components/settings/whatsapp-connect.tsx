@@ -55,7 +55,7 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-muted/40 p-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 p-4">
         <st.icon className={s.status === "CONNECTED" ? "h-6 w-6 text-success" : s.status === "ERROR" ? "h-6 w-6 text-destructive" : "h-6 w-6 text-muted-foreground"} />
         <div className="flex-1">
           <div className="flex items-center gap-2"><p className="font-semibold">{s.displayPhoneNumber ?? "WhatsApp Business number"}</p><Badge variant={st.variant}>{st.label}</Badge></div>
@@ -123,7 +123,7 @@ export function WhatsAppConnect({ initial, onChange }: { initial: WhatsAppStatus
 /** Collapsible block for the manual (paste your own Meta credentials) connection method. */
 function ManualSetup({ open, title, children }: { open: boolean; title: string; children: React.ReactNode }) {
   return (
-    <details open={open} className="group rounded-xl border p-4 [&_summary::-webkit-details-marker]:hidden">
+    <details open={open} className="group rounded-lg border p-4 [&_summary::-webkit-details-marker]:hidden">
       <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold">
         {title}
         <span className="text-xs font-normal text-muted-foreground group-open:hidden">Show</span>

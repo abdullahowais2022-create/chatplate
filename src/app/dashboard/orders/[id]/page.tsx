@@ -40,7 +40,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
               <ul className="divide-y">
                 {o.items.map((i) => (
                   <li key={i.id} className="flex gap-3 py-3">
-                    <span className="flex h-7 w-9 shrink-0 items-center justify-center rounded-md bg-brand-50 text-sm font-bold text-brand-700">{i.quantity}×</span>
+                    <span className="flex h-7 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-bold text-foreground">{i.quantity}×</span>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium">{i.name}{i.variantName && <span className="text-muted-foreground"> · {i.variantName}</span>}</p>
                       {i.addons.length > 0 && <p className="text-sm text-emerald-700">+ {i.addons.join(", ")}</p>}
@@ -71,7 +71,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
                 <div className="chat-bg max-h-96 space-y-2 overflow-y-auto rounded-lg p-3">
                   {o.messages.map((msg) => (
                     <div key={msg.id} className={msg.direction === "OUTBOUND" ? "flex justify-end" : "flex"}>
-                      <p dir="auto" className={`max-w-[80%] whitespace-pre-wrap rounded-xl px-3 py-1.5 text-sm shadow-sm ${msg.direction === "OUTBOUND" ? "bg-[#fde6d4]" : "bg-white"}`}>{msg.body}</p>
+                      <p dir="auto" className={`max-w-[80%] whitespace-pre-wrap rounded-lg px-3 py-1.5 text-sm shadow-sm ${msg.direction === "OUTBOUND" ? "bubble-out" : "bg-white"}`}>{msg.body}</p>
                     </div>
                   ))}
                 </div>
@@ -102,7 +102,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
               <ol className="relative space-y-4 border-l pl-4">
                 {o.timeline.map((e) => (
                   <li key={e.id} className="text-sm">
-                    <span className="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-card bg-brand-500" />
+                    <span className="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border-2 border-card bg-muted0" />
                     <p className="font-medium">
                       {e.type === "STATUS_CHANGED" ? `${STATUS_LABEL[e.fromStatus ?? ""] ?? e.fromStatus} → ${STATUS_LABEL[e.toStatus ?? ""] ?? e.toStatus}` : e.type === "CREATED" ? "Order placed" : e.type === "CANCELLED" ? "Cancelled" : e.type === "MODIFIED" ? "Order changed" : e.type === "ASSIGNED" ? "Assignment" : "Note"}
                     </p>

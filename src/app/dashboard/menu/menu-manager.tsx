@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Sparkles, ImagePlus, Languages, Pencil, Plus, Search, Trash2, UtensilsCrossed, X } from "lucide-react";
+import { ScanText, ImagePlus, Languages, Pencil, Plus, Search, Trash2, UtensilsCrossed, X } from "lucide-react";
 import type { MenuCategoryDTO, MenuItemDTO } from "@/server/services/queries";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,7 +22,7 @@ const TRANSLATION_LANGS = [
   { code: "ar", name: "Arabic" }, { code: "fr", name: "French" }, { code: "es", name: "Spanish" },
   { code: "hi", name: "Hindi" }, { code: "ur", name: "Urdu" }, { code: "tr", name: "Turkish" },
 ];
-const TAG_LABEL: Record<string, string> = { vegetarian: "🥬 Vegetarian", vegan: "🌱 Vegan", gluten_free: "Gluten-free", halal: "Halal", spicy: "🌶 Spicy", contains_nuts: "🥜 Contains nuts", dairy_free: "Dairy-free" };
+const TAG_LABEL: Record<string, string> = { vegetarian: "Vegetarian", vegan: "Vegan", gluten_free: "Gluten-free", halal: "Halal", spicy: "Spicy", contains_nuts: "Contains nuts", dairy_free: "Dairy-free" };
 
 type Props = { menu: MenuCategoryDTO[]; currency: string; canEdit: boolean; title?: string };
 
@@ -59,7 +59,7 @@ export function MenuManager({ menu, currency, canEdit, title = "Products" }: Pro
       <Dialog open={aiOpen} onOpenChange={setAiOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Set up your products with AI</DialogTitle>
+            <DialogTitle>Import your price list</DialogTitle>
             <DialogDescription>Paste a price list, describe what you sell, or add a photo of your menu or price board. You review everything before it&apos;s saved.</DialogDescription>
           </DialogHeader>
           <AiCatalogImport currency={currency} onDone={() => { setAiOpen(false); router.refresh(); }} />
@@ -70,7 +70,7 @@ export function MenuManager({ menu, currency, canEdit, title = "Products" }: Pro
         description="The AI only offers what's here: the exact names, prices, sizes and extras. Mark items sold out and the AI stops accepting them instantly."
         actions={canEdit && (
           <>
-            <Button variant="outline" onClick={() => setAiOpen(true)}><Sparkles /> Set up with AI</Button>
+            <Button variant="outline" onClick={() => setAiOpen(true)}><ScanText /> Import price list</Button>
             <Button variant="outline" onClick={() => setCatDialog({ open: true, cat: null })}><Plus /> Category</Button>
             <Button onClick={() => setEditing({ open: true, item: { categoryId: activeCat !== "all" ? activeCat : menu[0]?.id } })} disabled={!menu.length}><Plus /> Product</Button>
           </>
@@ -80,7 +80,7 @@ export function MenuManager({ menu, currency, canEdit, title = "Products" }: Pro
       {menu.length === 0 ? (
         <EmptyState icon={UtensilsCrossed} title={`Your ${title.toLowerCase()} list is empty`} description="Start by adding a category (e.g. Pizza, Drinks, Fruit & veg, Skincare), then add items with prices." action={canEdit && (
             <div className="flex flex-wrap justify-center gap-2">
-              <Button onClick={() => setAiOpen(true)}><Sparkles /> Set up with AI</Button>
+              <Button onClick={() => setAiOpen(true)}><ScanText /> Import from a photo or list</Button>
               <Button variant="outline" onClick={() => setCatDialog({ open: true, cat: null })}><Plus /> Add a category</Button>
             </div>
           )} />
@@ -125,7 +125,7 @@ export function MenuManager({ menu, currency, canEdit, title = "Products" }: Pro
                             <p className="flex-1 font-medium leading-tight">{i.name}</p>
                             {canEdit && <Button variant="ghost" size="icon" className="-mr-1 -mt-1 h-7 w-7" onClick={() => setEditing({ open: true, item: i })} aria-label="Edit"><Pencil /></Button>}
                           </div>
-                          <p className="text-sm font-semibold text-brand-700">
+                          <p className="num text-[13px] text-foreground">
                             {i.variants.length ? i.variants.map((v) => `${v.name} ${money(v.price, currency)}`).join(" · ") : money(i.price, currency)}
                           </p>
                           <div className="mt-1 flex flex-wrap gap-1">

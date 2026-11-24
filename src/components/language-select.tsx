@@ -27,7 +27,7 @@ export function LanguageMultiSelect({ value, onChange, locked = [], disabled }: 
     <div className="space-y-2">
       <div className="flex flex-wrap gap-1.5">
         {chosen.map((code) => (
-          <span key={code} className="inline-flex items-center gap-1 rounded-full border border-primary bg-brand-50 px-2.5 py-1 text-xs text-brand-800">
+          <span key={code} className="inline-flex items-center gap-1 rounded-full border border-primary bg-muted px-2.5 py-1 text-xs text-muted-foreground">
             {languageName(code)}
             {!locked.includes(code) && !disabled && (
               <button type="button" onClick={() => onChange(value.filter((c) => c !== code))} aria-label={`Remove ${languageName(code)}`} className="rounded-full hover:text-foreground"><X className="h-3 w-3" /></button>

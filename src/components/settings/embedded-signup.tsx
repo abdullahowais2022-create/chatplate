@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ShieldCheck, Smartphone, UserRound } from "lucide-react";
 import type { WhatsAppStatusDTO } from "@/server/services/queries";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
@@ -108,10 +107,10 @@ export function EmbeddedSignupButton({ config, onConnected }: { config: Config; 
   };
 
   return (
-    <div className="space-y-4 rounded-xl border bg-card p-5">
+    <div className="space-y-4 rounded-lg border bg-card p-5">
       <div>
-        <h3 className="text-lg font-semibold">Connect your WhatsApp number</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Takes about 2 minutes. TillText sets up the webhook, permissions and AI assistant for you automatically.</p>
+        <h3 className="font-semibold">Connect your WhatsApp number</h3>
+        <p className="mt-0.5 text-sm text-muted-foreground">About two minutes. Everything else is set up for you.</p>
       </div>
       <div role="radiogroup" aria-label="Which number" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {([
@@ -124,29 +123,17 @@ export function EmbeddedSignupButton({ config, onConnected }: { config: Config; 
             role="radio"
             aria-checked={mode === value}
             onClick={() => setMode(value)}
-            className={`rounded-lg border p-3 text-left text-sm transition-colors ${mode === value ? "border-primary bg-accent" : "hover:bg-muted/60"}`}
+            className={`rounded-md border p-3 text-left text-sm transition-colors ${mode === value ? "border-foreground ring-1 ring-foreground" : "hover:bg-muted/60"}`}
           >
             <span className="block font-medium">{title}</span>
             <span className="text-muted-foreground">{text}</span>
           </button>
         ))}
       </div>
-      <ol className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
-        {[
-          [UserRound, "Log in with Facebook", "In Meta's secure window. We never see your password."],
-          [ShieldCheck, "Pick your business", "Choose or create your WhatsApp Business account."],
-          mode === "app"
-            ? [Smartphone, "Confirm on your phone", "Scan the QR code Meta shows with your WhatsApp Business app."]
-            : [Smartphone, "Verify your number", "Enter the code Meta sends by SMS or call."],
-        ].map(([Icon, title, text], i) => {
-          const I = Icon as typeof UserRound;
-          return (
-            <li key={i} className="flex gap-3 rounded-lg bg-muted/50 p-3">
-              <I className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <span><span className="block font-medium">{title as string}</span><span className="text-muted-foreground">{text as string}</span></span>
-            </li>
-          );
-        })}
+      <ol className="space-y-1.5 text-sm text-muted-foreground">
+        <li><span className="num mr-2 text-foreground">1</span>Log in with Facebook in Meta&apos;s own window. TillText never sees your password.</li>
+        <li><span className="num mr-2 text-foreground">2</span>Pick or create your WhatsApp Business account.</li>
+        <li><span className="num mr-2 text-foreground">3</span>{mode === "app" ? "Scan the QR code Meta shows with your WhatsApp Business app." : "Enter the code Meta sends to the number by SMS or call."}</li>
       </ol>
       <Button size="lg" onClick={start} loading={busy} className="w-full bg-[#1877F2] text-white hover:bg-[#166fe5] sm:w-auto">
         <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden><path fill="currentColor" d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07Z" /></svg>

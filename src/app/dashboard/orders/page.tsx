@@ -45,8 +45,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           {/* Mobile cards */}
           <div className="space-y-2 md:hidden">
             {orders.map((o) => (
-              <Link key={o.id} href={`/dashboard/orders/${o.id}`} className="block rounded-xl border bg-card p-3 shadow-sm">
-                <div className="flex items-center justify-between"><span className="font-mono font-semibold">#{o.number}</span><OrderStatusBadge status={o.status} /></div>
+              <Link key={o.id} href={`/dashboard/orders/${o.id}`} className="block rounded-lg border bg-card p-3 shadow-sm">
+                <div className="flex items-center justify-between"><span className="num font-medium">#{o.number}</span><OrderStatusBadge status={o.status} /></div>
                 <p className="mt-1 text-sm font-medium">{o.customerName ?? "Customer"} · {o.type === "DELIVERY" ? "Delivery" : "Pickup"}</p>
                 <p className="truncate text-xs text-muted-foreground">{o.itemsSummary}</p>
                 <div className="mt-1 flex justify-between text-xs text-muted-foreground"><span>{timeAgo(o.createdAt)}</span><span className="font-semibold text-foreground">{money(o.total, o.currency)}</span></div>
@@ -62,13 +62,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               <tbody className="divide-y">
                 {orders.map((o) => (
                   <tr key={o.id} className="group relative hover:bg-muted/40">
-                    <td className="px-4 py-3"><Link href={`/dashboard/orders/${o.id}`} className="font-mono font-semibold after:absolute after:inset-0">#{o.number}</Link><p className="text-xs text-muted-foreground" title={formatDateTime(o.createdAt, s.timezone)}>{timeAgo(o.createdAt)}</p></td>
+                    <td className="px-4 py-3"><Link href={`/dashboard/orders/${o.id}`} className="num font-medium after:absolute after:inset-0">#{o.number}</Link><p className="text-xs text-muted-foreground" title={formatDateTime(o.createdAt, s.timezone)}>{timeAgo(o.createdAt)}</p></td>
                     <td className="px-4 py-3 font-medium">{o.customerName ?? "—"}</td>
                     <td className="max-w-xs px-4 py-3"><p className="truncate text-muted-foreground">{o.itemsSummary}</p></td>
-                    <td className="px-4 py-3">{o.type === "DELIVERY" ? "🛵 Delivery" : "🏪 Pickup"}{o.scheduledFor && <p className="text-xs text-muted-foreground">for {formatDateTime(o.scheduledFor, s.timezone)}</p>}</td>
+                    <td className="px-4 py-3">{o.type === "DELIVERY" ? "Delivery" : "Pickup"}{o.scheduledFor && <p className="text-xs text-muted-foreground">for {formatDateTime(o.scheduledFor, s.timezone)}</p>}</td>
                     <td className="px-4 py-3 text-muted-foreground">{PAYMENT_LABEL[o.paymentPreference]}</td>
                     <td className="px-4 py-3 text-muted-foreground">{o.assignedTo?.name ?? "—"}</td>
-                    <td className="px-4 py-3 text-right font-semibold">{money(o.total, o.currency)}</td>
+                    <td className="num whitespace-nowrap px-4 py-3 text-right">{money(o.total, o.currency)}</td>
                     <td className="px-4 py-3"><OrderStatusBadge status={o.status} /></td>
                   </tr>
                 ))}

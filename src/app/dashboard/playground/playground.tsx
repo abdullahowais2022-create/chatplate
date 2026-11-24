@@ -61,7 +61,7 @@ export function Playground({ openai, restaurantLocation }: { openai: boolean; re
   return (
     <>
       {!openai && (
-        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
           <b>Demo engine:</b> no <code>OPENAI_API_KEY</code> is configured, so a built-in rule-based parser is used. It handles common phrasings in 7 languages. Add an OpenAI key for full natural-language understanding, voice notes and replies in any language.
         </div>
       )}
@@ -126,7 +126,7 @@ function Tester({ openai }: { openai: boolean }) {
           <Card>
             <CardHeader><CardTitle className="text-sm">Conversation so far · state <code>{session.state}</code></CardTitle></CardHeader>
             <CardContent className="chat-bg max-h-80 space-y-2 overflow-y-auto rounded-b-xl p-3">
-              {session.history.map((h, i) => <p key={i} dir="auto" className={cn("max-w-[85%] whitespace-pre-wrap rounded-xl px-3 py-1.5 text-sm shadow-sm", h.role === "customer" ? "bg-white" : "ml-auto bg-[#fde6d4]")}>{h.text}</p>)}
+              {session.history.map((h, i) => <p key={i} dir="auto" className={cn("max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-1.5 text-sm shadow-sm", h.role === "customer" ? "bg-white" : "ml-auto bubble-out")}>{h.text}</p>)}
             </CardContent>
           </Card>
         )}
@@ -179,7 +179,7 @@ function Tester({ openai }: { openai: boolean }) {
               <CardContent className="chat-bg space-y-2 rounded-b-xl p-4">
                 {result.outbound.length === 0 && <p className="text-sm italic text-muted-foreground">{result.reply || "No reply. The order confirmation is sent once the order is created."}</p>}
                 {result.outbound.map((o, i) => (
-                  <div key={i} className="ml-auto max-w-[90%] rounded-2xl rounded-br-md bg-[#fde6d4] px-3 py-2 text-sm shadow-sm">
+                  <div key={i} className="ml-auto max-w-[90%] rounded-2xl rounded-br-md bubble-out px-3 py-2 text-sm shadow-sm">
                     <p dir="auto" className="whitespace-pre-wrap">{o.text}</p>
                     {o.kind === "location_request" && <p className="mt-2 flex items-center gap-1 rounded-lg bg-white/70 px-2 py-1 text-xs font-medium text-sky-700"><MapPin className="h-3 w-3" /> Send location</p>}
                     {o.buttons && <div className="mt-2 grid gap-1">{o.buttons.map((b) => <span key={b.id} className="rounded-lg bg-white/80 py-1 text-center text-xs font-medium text-sky-700">{b.title}</span>)}</div>}
@@ -204,7 +204,7 @@ function Tester({ openai }: { openai: boolean }) {
 }
 
 function Mini({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-xl border bg-card p-3"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-0.5 truncate font-semibold capitalize">{value}</p></div>;
+  return <div className="rounded-lg border bg-card p-3"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-0.5 truncate font-semibold capitalize">{value}</p></div>;
 }
 
 function Simulator({ restaurantLocation }: { restaurantLocation: { lat: number; lng: number } | null }) {
@@ -257,7 +257,7 @@ function Simulator({ restaurantLocation }: { restaurantLocation: { lat: number; 
         </CardContent>
       </Card>
       <Card className="flex h-[640px] flex-col overflow-hidden lg:col-span-2">
-        <div className="flex items-center gap-3 border-b bg-[#7a2e10] px-4 py-3 text-white">
+        <div className="flex items-center gap-3 border-b bg-[#141210] px-4 py-3 text-white">
           <Bot className="h-5 w-5" /><span className="font-semibold">Your business (WhatsApp preview)</span>
           {conv && <Badge variant={conv.mode === "AI" ? "brand" : "info"} className="ml-auto">{conv.mode === "AI" ? "AI handling" : "Staff handling"}</Badge>}
         </div>

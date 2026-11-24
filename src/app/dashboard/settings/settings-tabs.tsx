@@ -42,7 +42,7 @@ export function SettingsTabs({ defaultTab, me, team, whatsapp, audit, timezone }
             <CardHeader><CardTitle>WhatsApp Business connection</CardTitle><CardDescription>Uses the official Meta WhatsApp Cloud API.</CardDescription></CardHeader>
             <CardContent><WhatsAppConnect initial={whatsapp} /></CardContent>
           </Card>
-          <Card className="mt-4"><CardContent className="flex items-center gap-3 pt-5 text-sm"><FlaskConical className="h-5 w-5 text-brand-600" /><span className="flex-1">Test the assistant before going live.</span><Button variant="outline" asChild><Link href="/dashboard/playground">Open AI playground</Link></Button></CardContent></Card>
+          <Card className="mt-4"><CardContent className="flex items-center gap-3 pt-5 text-sm"><FlaskConical className="h-5 w-5 text-foreground" /><span className="flex-1">Test the assistant before going live.</span><Button variant="outline" asChild><Link href="/dashboard/playground">Open AI playground</Link></Button></CardContent></Card>
         </TabsContent>
       )}
       <TabsContent value="team"><TeamPanel me={me} team={team} /></TabsContent>

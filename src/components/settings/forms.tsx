@@ -63,7 +63,7 @@ export function ProfileForm({ settings, onSaved, submitLabel = "Save", readOnly 
   return (
     <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); void save("/api/settings/profile", "PUT", { ...f, latitude: f.latitude ? Number(f.latitude) : null, longitude: f.longitude ? Number(f.longitude) : null }); }}>
       <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border bg-muted">
+        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border bg-muted">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {f.logoUrl ? <img src={f.logoUrl} alt="Logo" className="h-full w-full object-cover" /> : <span className="text-xs text-muted-foreground">Logo</span>}
         </div>
@@ -220,7 +220,7 @@ export function PaymentForm({ settings, onSaved, submitLabel = "Save payment opt
         <div className="flex flex-wrap gap-2">
           {PAYMENT_METHODS.map((m) => {
             const on = methods.includes(m);
-            return <button type="button" key={m} disabled={readOnly} onClick={() => setMethods(on ? methods.filter((x) => x !== m) : [...methods, m])} className={cn("rounded-lg border px-3 py-1.5 text-sm", on ? "border-primary bg-brand-50 text-brand-800" : "text-muted-foreground")}>{PAYMENT_LABEL[m]}</button>;
+            return <button type="button" key={m} disabled={readOnly} onClick={() => setMethods(on ? methods.filter((x) => x !== m) : [...methods, m])} className={cn("rounded-lg border px-3 py-1.5 text-sm", on ? "border-foreground bg-foreground text-background" : "text-muted-foreground")}>{PAYMENT_LABEL[m]}</button>;
           })}
         </div>
       </div>

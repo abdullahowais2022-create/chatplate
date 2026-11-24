@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { ThemeProvider, ToasterThemed } from "@/components/theme";
+import "@fontsource-variable/instrument-sans";
+import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 
 export const metadata: Metadata = {

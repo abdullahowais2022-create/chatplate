@@ -4,79 +4,98 @@
 
 @layer base {
   :root {
-    --background: 30 33% 98%;
-    --foreground: 30 15% 11%;
+    /* Neutral, paper-like surfaces; ink for primary actions; brand orange only for accents. */
+    --background: 40 9% 97%;
+    --foreground: 30 8% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 30 15% 11%;
+    --card-foreground: 30 8% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 30 15% 11%;
-    --primary: 19 85% 48%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 30 25% 94%;
-    --secondary-foreground: 30 15% 15%;
-    --muted: 30 20% 95%;
-    --muted-foreground: 30 8% 42%;
-    --accent: 24 100% 96%;
-    --accent-foreground: 19 80% 35%;
-    --destructive: 0 72% 51%;
+    --popover-foreground: 30 8% 10%;
+    --primary: 30 8% 11%;
+    --primary-foreground: 40 20% 98%;
+    --secondary: 40 7% 94%;
+    --secondary-foreground: 30 8% 12%;
+    --muted: 40 7% 94%;
+    --muted-foreground: 30 5% 39%;
+    --accent: 40 7% 93%;
+    --accent-foreground: 30 8% 10%;
+    --destructive: 0 68% 48%;
     --destructive-foreground: 0 0% 100%;
-    --success: 152 60% 36%;
+    --success: 152 55% 32%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 30 15% 11%;
-    --border: 30 18% 89%;
-    --input: 30 18% 86%;
+    --border: 40 6% 88%;
+    --input: 40 6% 84%;
     --ring: 19 85% 48%;
-    --radius: 0.75rem;
-    --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Noto Sans Arabic", "Noto Sans Devanagari", sans-serif;
+    --brand: 19 85% 48%;
+    --radius: 0.5rem;
+    --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Arabic", "Noto Sans Devanagari", sans-serif;
+    --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
+
   .dark {
-    --background: 24 10% 7%;
-    --foreground: 30 15% 93%;
-    --card: 24 9% 10%;
-    --card-foreground: 30 15% 93%;
-    --popover: 24 9% 11%;
-    --popover-foreground: 30 15% 93%;
-    --primary: 21 90% 55%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 24 8% 16%;
-    --secondary-foreground: 30 15% 90%;
-    --muted: 24 8% 14%;
-    --muted-foreground: 30 8% 66%;
-    --accent: 21 40% 16%;
-    --accent-foreground: 24 95% 75%;
+    --background: 30 6% 7%;
+    --foreground: 40 10% 93%;
+    --card: 30 5% 10%;
+    --card-foreground: 40 10% 93%;
+    --popover: 30 5% 11%;
+    --popover-foreground: 40 10% 93%;
+    --primary: 40 12% 93%;
+    --primary-foreground: 30 8% 9%;
+    --secondary: 30 5% 15%;
+    --secondary-foreground: 40 10% 90%;
+    --muted: 30 5% 14%;
+    --muted-foreground: 40 5% 64%;
+    --accent: 30 5% 16%;
+    --accent-foreground: 40 10% 93%;
     --destructive: 0 70% 56%;
     --destructive-foreground: 0 0% 100%;
-    --success: 152 55% 45%;
+    --success: 152 50% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 55%;
     --warning-foreground: 30 15% 9%;
-    --border: 24 8% 19%;
-    --input: 24 8% 24%;
+    --border: 30 5% 18%;
+    --input: 30 5% 23%;
     --ring: 21 90% 55%;
+    --brand: 21 90% 55%;
     color-scheme: dark;
   }
+
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "cv11", "ss01";
+    font-feature-settings: "ss01";
   }
 }
 
 @layer utilities {
+  /* Receipt-style figures: prices, totals, order numbers. */
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .label-caps {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
   .scrollbar-thin {
     scrollbar-width: thin;
   }
   .chat-bg {
-    background-color: #f6efe7;
-    background-image: radial-gradient(rgba(227, 84, 19, 0.05) 1px, transparent 1px);
-    background-size: 18px 18px;
+    background-color: hsl(var(--muted) / 0.55);
   }
-  .dark .chat-bg {
-    background-color: #17120e;
-    background-image: radial-gradient(rgba(251, 138, 60, 0.07) 1px, transparent 1px);
+  .bubble-out {
+    background-color: #ebe5da;
+  }
+  .dark .bubble-out {
+    background-color: #2a251f;
   }
 }
 
@@ -86,8 +105,6 @@
  */
 .dark .bg-white { background-color: hsl(var(--card)); }
 .dark .bg-white\/70, .dark .bg-white\/80 { background-color: hsl(var(--card) / 0.85); }
-.dark .bg-\[\#fde6d4\] { background-color: #4a2614; }
-.dark .bg-\[\#7a2e10\] { background-color: #3a1a0b; }
 .dark .text-ink { color: hsl(var(--foreground)); }
 .dark .bg-brand-50 { background-color: #2c1a10; }
 .dark .text-brand-700, .dark .text-brand-800 { color: #fdac74; }

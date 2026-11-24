@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, PasswordInput } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
@@ -45,10 +44,9 @@ export function LoginForm({ demo }: { demo: boolean }) {
         <Button type="submit" className="w-full" loading={loading === "login"}>Sign in</Button>
       </form>
       {demo && (
-        <div className="rounded-xl border border-dashed border-brand-300 bg-brand-50 p-4">
-          <p className="text-sm font-medium text-brand-800">Just looking around?</p>
-          <p className="mt-0.5 text-xs text-brand-700">Explore a fully loaded demo business (a restaurant) with sample conversations, orders and products.</p>
-          <Button variant="outline" className="mt-3 w-full" onClick={tryDemo} loading={loading === "demo"}><Sparkles /> Try the demo</Button>
+        <div className="flex items-center justify-between gap-4 border-t pt-5">
+          <p className="text-sm text-muted-foreground">Just looking? Open a sample restaurant with real-looking orders and chats.</p>
+          <Button variant="outline" size="sm" className="shrink-0" onClick={tryDemo} loading={loading === "demo"}>Try the demo</Button>
         </div>
       )}
     </div>

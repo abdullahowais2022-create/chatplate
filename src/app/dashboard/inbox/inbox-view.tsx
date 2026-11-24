@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Languages, AlertTriangle, ArrowLeft, Bot, Check, CheckCheck, Clock, Hand, Headphones, Info, MapPin, MessagesSquare, RotateCcw, Search, Send, Sparkles, UserRound, Wand2, XCircle } from "lucide-react";
+import { Languages, AlertTriangle, ArrowLeft, Bot, Check, CheckCheck, Clock, Hand, Headphones, Info, MapPin, MessagesSquare, RotateCcw, Search, Send, UserRound, Wand2, XCircle } from "lucide-react";
 import type { ConversationDetail, ConversationListItem } from "@/server/services/queries";
 import { useLive } from "@/components/dashboard/live";
 import { Avatar, EmptyState, Skeleton } from "@/components/ui/misc";
@@ -36,7 +36,7 @@ export function InboxView({ conversations, selectedId, filter, q }: { conversati
   };
 
   return (
-    <div className="-m-4 flex h-[calc(100vh-4rem)] overflow-hidden border-t bg-card sm:-m-6 lg:m-0 lg:h-[calc(100vh-7rem)] lg:rounded-xl lg:border">
+    <div className="-m-4 flex h-[calc(100vh-4rem)] overflow-hidden border-t bg-card sm:-m-6 lg:m-0 lg:h-[calc(100vh-7rem)] lg:rounded-lg lg:border">
       {/* List */}
       <div className={cn("flex w-full flex-col border-r lg:w-96 lg:shrink-0", selectedId && "hidden lg:flex")}>
         <div className="space-y-3 border-b p-3">
@@ -57,10 +57,10 @@ export function InboxView({ conversations, selectedId, filter, q }: { conversati
             <div className="p-4"><EmptyState icon={MessagesSquare} title="No conversations" description={filter === "all" ? "When customers message your WhatsApp number, they'll appear here." : "Nothing matches this filter."} /></div>
           ) : (
             conversations.map((c) => (
-              <button key={c.id} onClick={() => nav({ c: c.id })} className={cn("flex w-full items-start gap-3 border-b px-3 py-3 text-left transition-colors hover:bg-muted/60", selectedId === c.id && "bg-brand-50/70")}>
+              <button key={c.id} onClick={() => nav({ c: c.id })} className={cn("flex w-full items-start gap-3 border-b px-3 py-3 text-left transition-colors hover:bg-muted/60", selectedId === c.id && "bg-muted")}>
                 <div className="relative">
                   <Avatar name={c.customerName ?? c.phone} />
-                  {c.mode === "AI" ? <Bot className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-card p-0.5 text-brand-600" /> : <UserRound className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-card p-0.5 text-sky-600" />}
+                  {c.mode === "AI" ? <Bot className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-card p-0.5 text-foreground" /> : <UserRound className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-card p-0.5 text-sky-600" />}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -217,9 +217,9 @@ function ConversationPane({ id, onBack }: { id: string; onBack: () => void }) {
           <p className="mb-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-900"><Clock className="h-3.5 w-3.5" /> The customer last wrote over 24 hours ago. WhatsApp only allows template messages now, so free-form replies will fail.</p>
         )}
         {human && (
-          <div className="mb-2 rounded-lg border border-brand-200 bg-brand-50/60 p-2.5">
+          <div className="mb-2 rounded-lg border bg-muted/60 p-2.5">
             <div className="flex items-center justify-between gap-2">
-              <p className="flex items-center gap-1.5 text-xs font-medium text-brand-800"><Sparkles className="h-3.5 w-3.5" /> AI suggestion (never sent automatically)</p>
+              <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Bot className="h-3.5 w-3.5" /> Suggested reply (not sent until you send it)</p>
               <Button size="sm" variant="ghost" className="h-7" loading={busy === "suggest"} onClick={suggest}><Wand2 /> {conv.aiSuggestion ? "Regenerate" : "Suggest"}</Button>
             </div>
             {conv.aiSuggestion && (
@@ -277,9 +277,9 @@ function Bubble({ m, staffLanguage }: { m: Msg; staffLanguage: string }) {
   const ai = m.ai as { extraction?: { intent?: string; confidence?: number; language?: string; missing_information?: string[] }; decision?: { action?: string }; engine?: string; errors?: string[] } | null;
   return (
     <div className={cn("flex", out ? "justify-end" : "justify-start")}>
-      <div className={cn("max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm sm:max-w-[70%]", out ? "rounded-br-md bg-[#fde6d4]" : "rounded-bl-md bg-white")}>
+      <div className={cn("max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm sm:max-w-[70%]", out ? "rounded-br-md bubble-out" : "rounded-bl-md bg-white")}>
         {out && (
-          <p className="mb-0.5 flex items-center gap-1 text-[11px] font-medium text-brand-800">
+          <p className="mb-0.5 flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
             {m.sender === "AI" ? <><Bot className="h-3 w-3" /> AI assistant</> : m.sender === "STAFF" ? <><UserRound className="h-3 w-3" /> {m.staffName ?? "Staff"}</> : <><Info className="h-3 w-3" /> Automatic update</>}
           </p>
         )}
@@ -305,18 +305,18 @@ function Bubble({ m, staffLanguage }: { m: Msg; staffLanguage: string }) {
             <p className="whitespace-pre-wrap break-words text-[13px] text-foreground/80" dir="auto">{tr.text}</p>
           </div>
         )}
-        {m.requestsLocation && <p className="mt-2 flex items-center gap-1 text-[11px] text-brand-800"><MapPin className="h-3 w-3" /> Asked to share location</p>}
+        {m.requestsLocation && <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground"><MapPin className="h-3 w-3" /> Asked to share location</p>}
         {m.buttons.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">{m.buttons.map((b) => <span key={b.id} className="rounded-full border border-brand-300 bg-white/70 px-2 py-0.5 text-[11px] text-brand-800">{b.title}</span>)}</div>
+          <div className="mt-2 flex flex-wrap gap-1">{m.buttons.map((b) => <span key={b.id} className="rounded-full border border-border bg-white/70 px-2 py-0.5 text-[11px] text-muted-foreground">{b.title}</span>)}</div>
         )}
         <div className="mt-1 flex items-center justify-end gap-1.5 text-[10px] text-muted-foreground">
           {!staffOriginal && foreign && (tr.text ? (
             <button onClick={() => setTr((x) => ({ ...x, hidden: !x.hidden }))} className="rounded px-1 font-medium hover:bg-muted">{tr.hidden ? "Show translation" : "Hide translation"}</button>
           ) : (
-            <button onClick={translate} disabled={tr.busy} className="flex items-center gap-0.5 rounded px-1 font-medium text-brand-800 hover:bg-muted disabled:opacity-60"><Languages className="h-3 w-3" /> {tr.busy ? "Translating…" : "Translate"}</button>
+            <button onClick={translate} disabled={tr.busy} className="flex items-center gap-0.5 rounded px-1 font-medium text-muted-foreground hover:bg-muted disabled:opacity-60"><Languages className="h-3 w-3" /> {tr.busy ? "Translating…" : "Translate"}</button>
           ))}
           {!out && ai?.extraction && (
-            <button onClick={() => setShowAi((s) => !s)} className="rounded bg-brand-100 px-1 font-medium text-brand-800 hover:bg-brand-200">AI</button>
+            <button onClick={() => setShowAi((s) => !s)} className="rounded bg-muted px-1 font-medium text-foreground hover:bg-accent">AI</button>
           )}
           <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
           {out && <Ticks status={m.status} error={m.error} />}

@@ -47,7 +47,7 @@ export function Wizard({ settings, whatsapp, menuCount, canManageWhatsApp }: { s
   const formProps = { settings, onSaved: next, submitLabel: "Save & continue" };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-brand-50/60 to-background dark:from-brand-900/20">
+    <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between px-6 py-5">
         <Logo />
         <div className="flex items-center gap-2">
@@ -69,7 +69,7 @@ export function Wizard({ settings, whatsapp, menuCount, canManageWhatsApp }: { s
 
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-700"><S.icon className="h-5 w-5" /></div>
+            <div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-foreground"><S.icon className="h-5 w-5" /></div>
               <div><CardTitle className="text-xl">{S.title}</CardTitle>{S.description && <CardDescription>{S.description}</CardDescription>}</div>
             </div>
           </CardHeader>
@@ -99,7 +99,7 @@ export function Wizard({ settings, whatsapp, menuCount, canManageWhatsApp }: { s
             )}
             {step === 6 && (
               <div className="space-y-4 py-4 text-center">
-                <PartyPopper className="mx-auto h-12 w-12 text-brand-600" />
+                <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background"><Check className="h-6 w-6" /></span>
                 <h2 className="text-2xl font-bold">You&apos;re ready to take WhatsApp orders</h2>
                 <p className="mx-auto max-w-md text-muted-foreground">Try the AI playground first: chat as a customer and watch orders land in your dashboard.</p>
                 <div className="flex justify-center gap-2">

@@ -2,7 +2,6 @@ import { setupProblems } from "@/server/setup";
 import { redirect } from "next/navigation";
 import { getSession } from "@/server/auth/session";
 import { Logo } from "@/components/brand";
-import { MessageCircle, Languages, ClipboardCheck } from "lucide-react";
 import { ThemeSwitch } from "@/components/theme";
 
 // Always render per request (auth, live data, and setup checks).
@@ -20,27 +19,33 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
           {children}
         </div>
       </div>
-      <div className="relative hidden overflow-hidden bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-700 dark:to-brand-900 lg:flex lg:flex-col lg:justify-center lg:px-16 text-white">
-        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/10" />
-        <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-white/5" />
-        <h2 className="relative text-4xl font-bold leading-tight">Your orders,<br />straight from WhatsApp.</h2>
-        <p className="relative mt-4 max-w-md text-lg text-white/85">Customers text or send a voice note in their own language. TillText understands it, confirms the order and drops it into your dashboard.</p>
-        <ul className="relative mt-10 space-y-4 text-white/90">
-          {[
-            [MessageCircle, "Text and voice-note ordering, 24/7"],
-            [Languages, "Replies in the customer's language"],
-            [ClipboardCheck, "Only your real products, prices and hours"],
-          ].map(([Icon, text], i) => {
-            const I = Icon as typeof MessageCircle;
-            return (
-              <li key={i} className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15"><I className="h-5 w-5" /></span>
-                {text as string}
-              </li>
-            );
-          })}
+      <div className="relative hidden flex-col justify-between bg-[#141210] p-12 text-[#efece6] lg:flex">
+        <p className="label-caps !text-[#9b958c]">WhatsApp ordering for local businesses</p>
+        <div className="mx-auto w-full max-w-md">
+          <p className="max-w-sm text-[28px] font-semibold leading-tight tracking-tight">Customers text you like a friend. You get a clean order ticket.</p>
+          <div className="mt-10 grid grid-cols-[1fr_1.05fr] items-start gap-4">
+            <div className="space-y-2 text-[13px] leading-snug">
+              <p className="w-fit max-w-[95%] rounded-lg rounded-tl-sm bg-[#25231f] px-3 py-2" dir="auto">Hola! 2 pizzas pepperoni grandes y una coca para recoger 🙏</p>
+              <p className="ml-auto w-fit max-w-[95%] rounded-lg rounded-tr-sm bg-[#2f3b2f] px-3 py-2">¡Listo! Total $38.50. ¿Confirmo tu pedido?</p>
+              <p className="w-fit rounded-lg rounded-tl-sm bg-[#25231f] px-3 py-2">Sí ✅</p>
+            </div>
+            <div className="rotate-1 rounded-sm bg-[#faf8f3] px-4 pb-5 pt-4 font-mono text-[11.5px] leading-relaxed text-[#1c1a17] shadow-2xl">
+              <p className="text-center font-semibold tracking-wider">ORDER 1036</p>
+              <p className="text-center text-[10px] text-[#6b665e]">PICKUP · 12:41</p>
+              <p className="my-2 border-t border-dashed border-[#bdb7ac]" />
+              <p className="flex justify-between"><span>2× Pepperoni (L)</span><span>36.00</span></p>
+              <p className="flex justify-between"><span>1× Coca-Cola</span><span>2.50</span></p>
+              <p className="my-2 border-t border-dashed border-[#bdb7ac]" />
+              <p className="flex justify-between font-semibold"><span>TOTAL</span><span>38.50</span></p>
+              <p className="mt-2 text-[10px] text-[#6b665e]">Lucía F. · Spanish · pays at pickup</p>
+            </div>
+          </div>
+        </div>
+        <ul className="grid grid-cols-3 gap-6 border-t border-[#2a2723] pt-6 text-[13px] text-[#b9b3a9]">
+          <li><span className="block font-medium text-[#efece6]">Any language</span>Text or voice notes</li>
+          <li><span className="block font-medium text-[#efece6]">Your real prices</span>Never invented by AI</li>
+          <li><span className="block font-medium text-[#efece6]">No payments taken</span>Customers pay you</li>
         </ul>
-        <p className="relative mt-12 text-sm text-white/70">For restaurants, shops, groceries, pharmacies and more. No payment processing: customers pay you directly.</p>
       </div>
     </div>
   );
