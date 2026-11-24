@@ -10,8 +10,9 @@ import { audit } from "@/server/audit";
 
 const schema = z.object({
   code: z.string().min(10).max(2000),
-  wabaId: z.string().regex(/^\d{5,30}$/, "Invalid WhatsApp Business Account id"),
-  phoneNumberId: z.string().regex(/^\d{5,30}$/, "Invalid phone number id"),
+  // Normally sent by Meta's window; if they're missing, the server looks them up from the token.
+  wabaId: z.string().regex(/^\d{5,30}$/, "Invalid WhatsApp Business Account id").nullish(),
+  phoneNumberId: z.string().regex(/^\d{5,30}$/, "Invalid phone number id").nullish(),
   /** The business keeps using the WhatsApp Business app on its phone (Meta "coexistence"). */
   existingApp: z.boolean().default(false),
 });

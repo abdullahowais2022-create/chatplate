@@ -69,16 +69,44 @@ async function attachPlatformSystemUser(wabaId: string, phoneNumberId: string): 
 
 type PhoneInfo = { display_phone_number?: string; verified_name?: string; platform_type?: string; code_verification_status?: string };
 
+/**
+ * Finds the WhatsApp account and number a business just shared, using only the token. Used when Meta's
+ * window didn't pass the ids back to the page (its postMessage is sometimes lost).
+ */
+async function discoverSharedNumber(accessToken: string): Promise<{ wabaId: string; phoneNumberId: string }> {
+  const e = env();
+  const url = new URL(`https://graph.facebook.com/${e.META_GRAPH_API_VERSION}/debug_token`);
+  url.searchParams.set("input_token", accessToken);
+  url.searchParams.set("access_token", `${e.META_APP_ID}|${e.META_APP_SECRET}`);
+  const res = await fetch(url, { signal: AbortSignal.timeout(15_000) }).catch(() => null);
+  const json = (await res?.json().catch(() => null)) as { data?: { granular_scopes?: { scope: string; target_ids?: string[] }[] } } | null;
+  const wabaIds = [...new Set((json?.data?.granular_scopes ?? []).filter((g) => g.scope === "whatsapp_business_management" || g.scope === "whatsapp_business_messaging").flatMap((g) => g.target_ids ?? []))];
+  if (!wabaIds.length) throw new MetaApiError("Facebook login worked, but no WhatsApp Business account was shared. In Meta's window, choose or create a WhatsApp Business account and add your number, then press Finish.", 400);
+
+  type Num = { id: string; display_phone_number?: string; last_onboarded_time?: string };
+  const candidates: { wabaId: string; num: Num }[] = [];
+  for (const wabaId of wabaIds.slice(0, 5)) {
+    const list = await graphFetch<{ data?: Num[] }>({ accessToken, phoneNumberId: "", wabaId }, `/${wabaId}/phone_numbers?fields=id,display_phone_number,last_onboarded_time`).catch(() => null);
+    for (const num of list?.data ?? []) candidates.push({ wabaId, num });
+  }
+  if (!candidates.length) throw new MetaApiError("Your WhatsApp Business account was shared, but it has no phone number yet. Run Connect with Facebook again and add your number in Meta's window.", 400);
+  candidates.sort((a, b) => (b.num.last_onboarded_time ?? "").localeCompare(a.num.last_onboarded_time ?? ""));
+  return { wabaId: candidates[0]!.wabaId, phoneNumberId: candidates[0]!.num.id };
+}
+
 export async function connectWithEmbeddedSignup(
   restaurantId: string,
-  input: { code: string; wabaId: string; phoneNumberId: string; existingApp?: boolean },
+  request: { code: string; wabaId?: string | null; phoneNumberId?: string | null; existingApp?: boolean },
 ): Promise<{ displayPhoneNumber: string | null; verifiedName: string | null; warning: string | null }> {
   if (!embeddedSignupConfig()) throw new MetaApiError("One-click WhatsApp connection isn't set up on this TillText server yet.", 400);
+
+  const { token: accessToken, expiresAt } = await exchangeCode(request.code);
+  const ids = request.wabaId && request.phoneNumberId ? { wabaId: request.wabaId, phoneNumberId: request.phoneNumberId } : await discoverSharedNumber(accessToken);
+  const input = { ...ids, existingApp: request.existingApp };
 
   const conflict = await db.whatsAppAccount.findFirst({ where: { phoneNumberId: input.phoneNumberId, NOT: { restaurantId } } });
   if (conflict) throw new MetaApiError("This phone number is already connected to another business on TillText.", 409);
 
-  const { token: accessToken, expiresAt } = await exchangeCode(input.code);
   const creds = { accessToken, phoneNumberId: input.phoneNumberId, wabaId: input.wabaId };
 
   // Proves the token controls this number (ids from the browser are otherwise untrusted).

@@ -88,24 +88,22 @@ export function EmbeddedSignupButton({ config, onConnected }: { config: Config; 
   }, [config]);
 
   const waitForIds = async () => {
-    for (let i = 0; i < 40 && !session.current.phoneNumberId && !session.current.cancelledAt; i++) await new Promise((r) => setTimeout(r, 250));
+    for (let i = 0; i < 12 && !session.current.phoneNumberId && !session.current.cancelledAt; i++) await new Promise((r) => setTimeout(r, 250));
     return session.current;
   };
 
   const finish = async (code: string | null) => {
     try {
       const ids = await waitForIds();
-      if (!code || !ids.phoneNumberId || !ids.wabaId) {
+      if (!code) {
         const why = ids.cancelledAt
           ? `Meta's window was closed at the "${ids.cancelledAt.toLowerCase().replace(/_/g, " ")}" step. You can start again any time.`
-          : !code
-            ? "Facebook's window closed without logging in. If Meta showed an error inside it, take a screenshot of that message and try again."
-            : "You logged in, but the WhatsApp steps in Meta's window weren't completed (choose the business, add the number, then press Finish).";
-        console.warn("[tilltext] embedded signup incomplete", { gotCode: Boolean(code), ...ids });
+          : "Facebook's window closed without logging in. If Meta showed an error inside it, take a screenshot of that message and try again.";
         toast.message(why, { duration: 12_000 });
         return;
       }
-      const next = await api<WhatsAppStatusDTO & { warning?: string | null }>("/api/whatsapp/embedded", { body: { code, wabaId: ids.wabaId, phoneNumberId: ids.phoneNumberId, existingApp: mode === "app" } });
+      // If Meta's window didn't pass the ids back, the server finds them from the login.
+      const next = await api<WhatsAppStatusDTO & { warning?: string | null }>("/api/whatsapp/embedded", { body: { code, wabaId: ids.wabaId ?? null, phoneNumberId: ids.phoneNumberId ?? null, existingApp: mode === "app" } });
       onConnected(next);
       if (next.warning) toast.warning(next.warning);
       else toast.success(`WhatsApp connected${next.displayPhoneNumber ? `: ${next.displayPhoneNumber}` : ""}. Your AI assistant is live.`);
