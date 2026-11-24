@@ -10,10 +10,20 @@ const clean = (v) => (v ?? "").trim().replace(/^["']|["']$/g, "");
 
 if (run("npx", ["prisma", "generate"]) !== 0) process.exit(1);
 
-// DATABASE_URL may also come from Vercel's Neon/Postgres integration under other names.
-const dbUrl = clean(process.env.DATABASE_URL) || clean(process.env.POSTGRES_PRISMA_URL) || clean(process.env.POSTGRES_URL);
-const directUrl =
-  clean(process.env.DIRECT_URL) || clean(process.env.DATABASE_URL_UNPOOLED) || clean(process.env.POSTGRES_URL_NON_POOLING) || dbUrl;
+// The database URL may come from Vercel's Neon/Postgres integration under other names, often with a
+// custom prefix (e.g. DATABASE_POSTGRES_URL). Keep in sync with src/server/db-url.ts.
+const POOLED = ["DATABASE_URL", "POSTGRES_PRISMA_URL", "POSTGRES_URL"];
+const DIRECT = ["DIRECT_URL", "DATABASE_URL_UNPOOLED", "POSTGRES_URL_NON_POOLING"];
+const find = (suffixes) => {
+  for (const s of suffixes) if (clean(process.env[s])) return clean(process.env[s]);
+  const keys = Object.keys(process.env).sort();
+  for (const s of suffixes)
+    for (const k of keys)
+      if (k.endsWith(`_${s}`) && /^postgres(ql)?:\/\//.test(clean(process.env[k]))) return clean(process.env[k]);
+  return "";
+};
+const dbUrl = find(POOLED);
+const directUrl = find(DIRECT) || dbUrl;
 if (!dbUrl) {
   console.warn("\n⚠️  DATABASE_URL is not set: skipping database migrations. The site will show a setup page until you add it.\n");
 } else {

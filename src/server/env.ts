@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { databaseUrl } from "./db-url";
 
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -39,7 +40,7 @@ export function env(): Env {
       return [k, t ? t : undefined];
     }),
   );
-  clean.DATABASE_URL ??= clean.POSTGRES_PRISMA_URL ?? clean.POSTGRES_URL;
+  clean.DATABASE_URL = databaseUrl(clean) || undefined;
   // On Vercel, default APP_URL to the project's production domain.
   if (!clean.APP_URL) {
     const host = clean.VERCEL_PROJECT_PRODUCTION_URL ?? clean.VERCEL_URL;

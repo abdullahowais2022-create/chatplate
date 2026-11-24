@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "./db";
+import { databaseUrl } from "./db-url";
 
 export type SetupProblem = { key: string; title: string; fix: string };
 
@@ -21,7 +22,7 @@ function keyOk(v: string) {
 export async function setupProblems(): Promise<SetupProblem[]> {
   if (healthy) return [];
   const problems: SetupProblem[] = [];
-  const dbUrl = clean(process.env.DATABASE_URL) || clean(process.env.POSTGRES_PRISMA_URL) || clean(process.env.POSTGRES_URL);
+  const dbUrl = databaseUrl();
   if (!dbUrl) {
     problems.push({ key: "DATABASE_URL", title: "No database connected", fix: "Easiest: in your Vercel project open the Storage tab → Create Database → Neon → connect it to this project, then redeploy. (Or add DATABASE_URL yourself with a postgresql:// connection string.)" });
   } else if (!/^postgres(ql)?:\/\//.test(dbUrl)) {
