@@ -19,25 +19,37 @@ declare global {
 }
 
 const SDK_ID = "facebook-jssdk";
+let sdkPromise: Promise<FBStatic> | null = null;
 
+/** Loads and initialises Facebook's SDK once per page. Fails clearly if it's blocked. */
 function loadSdk(cfg: Config): Promise<FBStatic> {
-  return new Promise((resolve, reject) => {
-    const ready = () => {
+  if (window.FB) return Promise.resolve(window.FB);
+  sdkPromise ??= new Promise<FBStatic>((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      sdkPromise = null;
+      reject(new Error("Facebook didn't load. An ad blocker or browser privacy setting may be blocking it: allow facebook.com for this site, then reload."));
+    }, 20_000);
+    window.fbAsyncInit = () => {
+      window.clearTimeout(timer);
       window.FB!.init({ appId: cfg.appId, autoLogAppEvents: true, xfbml: false, version: cfg.graphVersion });
       resolve(window.FB!);
     };
-    if (window.FB) return ready();
-    window.fbAsyncInit = ready;
-    if (document.getElementById(SDK_ID)) return;
-    const s = document.createElement("script");
-    s.id = SDK_ID;
-    s.src = "https://connect.facebook.net/en_US/sdk.js";
-    s.async = true;
-    s.defer = true;
-    s.crossOrigin = "anonymous";
-    s.onerror = () => reject(new Error("Couldn't load Facebook. Check your connection or ad blocker, then try again."));
-    document.body.appendChild(s);
+    if (!document.getElementById(SDK_ID)) {
+      const s = document.createElement("script");
+      s.id = SDK_ID;
+      s.src = "https://connect.facebook.net/en_US/sdk.js";
+      s.async = true;
+      s.crossOrigin = "anonymous";
+      s.onerror = () => {
+        window.clearTimeout(timer);
+        sdkPromise = null;
+        document.getElementById(SDK_ID)?.remove();
+        reject(new Error("Couldn't load Facebook. An ad blocker or privacy setting may be blocking it: allow facebook.com for this site, then try again."));
+      };
+      document.body.appendChild(s);
+    }
   });
+  return sdkPromise;
 }
 
 /**
@@ -47,12 +59,15 @@ function loadSdk(cfg: Config): Promise<FBStatic> {
  */
 export function EmbeddedSignupButton({ config, onConnected }: { config: Config; onConnected: (s: WhatsAppStatusDTO) => void }) {
   const [busy, setBusy] = useState(false);
+  const [sdk, setSdk] = useState<{ state: "loading" | "ready" | "error"; error?: string }>({ state: "loading" });
+  const [popupHint, setPopupHint] = useState(false);
   // "app": keep using the WhatsApp Business app on the phone (Meta coexistence). "new": a fresh number.
   const [mode, setMode] = useState<"app" | "new">("app");
   const session = useRef<{ wabaId?: string; phoneNumberId?: string; cancelledAt?: string }>({});
 
   useEffect(() => {
-    loadSdk(config).catch(() => undefined); // preload so the popup opens instantly on click
+    // Load Facebook before the click: browsers block pop-ups that don't open immediately on a click.
+    loadSdk(config).then(() => setSdk({ state: "ready" }), (e: Error) => setSdk({ state: "error", error: e.message }));
     const onMessage = (event: MessageEvent) => {
       if (!/(^|\.)facebook\.com$/.test(new URL(event.origin).hostname)) return;
       let data: { type?: string; event?: string; data?: { waba_id?: string; phone_number_id?: string; current_step?: string } };
@@ -77,19 +92,8 @@ export function EmbeddedSignupButton({ config, onConnected }: { config: Config; 
     return session.current;
   };
 
-  const start = async () => {
-    setBusy(true);
-    session.current = {};
+  const finish = async (code: string | null) => {
     try {
-      const FB = await loadSdk(config);
-      const code = await new Promise<string | null>((resolve) =>
-        FB.login((r) => resolve(r.authResponse?.code ?? null), {
-          config_id: config.configId,
-          response_type: "code",
-          override_default_response_type: true,
-          extras: { setup: {}, featureType: mode === "app" ? "whatsapp_business_app_onboarding" : "", sessionInfoVersion: "3" },
-        }),
-      );
       const ids = await waitForIds();
       if (!code || !ids.phoneNumberId || !ids.wabaId) {
         toast.message(ids.cancelledAt ? "WhatsApp setup was closed before it finished. You can start again any time." : "WhatsApp setup didn't finish. Please try again.");
@@ -103,7 +107,43 @@ export function EmbeddedSignupButton({ config, onConnected }: { config: Config; 
       toast.error((e as Error).message);
     } finally {
       setBusy(false);
+      setPopupHint(false);
     }
+  };
+
+  // Must call FB.login synchronously inside the click, or the browser blocks Facebook's window.
+  const start = () => {
+    const FB = window.FB;
+    if (!FB) {
+      toast.error(sdk.error ?? "Facebook is still loading. Try again in a moment.");
+      return;
+    }
+    setBusy(true);
+    session.current = {};
+    const hint = window.setTimeout(() => setPopupHint(true), 6000);
+    try {
+      FB.login(
+        (r) => {
+          window.clearTimeout(hint);
+          void finish(r.authResponse?.code ?? null);
+        },
+        {
+          config_id: config.configId,
+          response_type: "code",
+          override_default_response_type: true,
+          extras: { setup: {}, featureType: mode === "app" ? "whatsapp_business_app_onboarding" : "", sessionInfoVersion: "3" },
+        },
+      );
+    } catch (e) {
+      window.clearTimeout(hint);
+      setBusy(false);
+      toast.error((e as Error).message);
+    }
+  };
+
+  const cancel = () => {
+    setBusy(false);
+    setPopupHint(false);
   };
 
   return (
@@ -135,10 +175,17 @@ export function EmbeddedSignupButton({ config, onConnected }: { config: Config; 
         <li><span className="num mr-2 text-foreground">2</span>Pick or create your WhatsApp Business account.</li>
         <li><span className="num mr-2 text-foreground">3</span>{mode === "app" ? "Scan the QR code Meta shows with your WhatsApp Business app." : "Enter the code Meta sends to the number by SMS or call."}</li>
       </ol>
-      <Button size="lg" onClick={start} loading={busy} className="w-full bg-[#1877F2] text-white hover:bg-[#166fe5] sm:w-auto">
+      <Button size="lg" onClick={start} loading={busy || sdk.state === "loading"} disabled={sdk.state === "error"} className="w-full bg-[#1877F2] text-white hover:bg-[#166fe5] sm:w-auto">
         <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden><path fill="currentColor" d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07Z" /></svg>
         Connect with Facebook
       </Button>
+      {sdk.state === "error" && <p className="text-sm text-destructive">{sdk.error}</p>}
+      {busy && popupHint && (
+        <div className="rounded-md bg-muted p-3 text-sm">
+          <p><b>Don&apos;t see a Facebook window?</b> Your browser may have blocked it. Click the blocked pop-up icon at the right of the address bar, choose <b>Always allow pop-ups</b> for this site, then try again. The window can also open behind this one.</p>
+          <button type="button" onClick={cancel} className="mt-2 text-sm font-medium underline underline-offset-2">Cancel and try again</button>
+        </div>
+      )}
       <p className="text-xs text-muted-foreground">
         {mode === "app"
           ? "Official Meta connection, so there's no ban risk. Keep the WhatsApp Business app updated and open it at least every couple of weeks to stay linked."
