@@ -123,9 +123,9 @@ html,body{margin:0;background:#000}
       <div style="font-weight:800;font-size:24px">ROSA'S TAQUERIA</div>
       <div style="color:#8a8178;margin-top:4px">ORDER #1042 · DELIVERY</div>
       <hr>
-      <div class="r"><span>2× Tacos al pastor</span><span>7.00</span></div>
+      <div class="r"><span>2× Chicken tacos</span><span>7.00</span></div>
       <div class="r"><span>1× Coca-Cola</span><span>1.50</span></div>
-      <div class="r" style="color:#8a8178"><span>Lang: Spanish</span><span></span></div>
+      <div class="r" style="color:#8a8178"><span>Via WhatsApp</span><span></span></div>
       <hr>
       <div class="r" style="font-weight:800;font-size:26px"><span>TOTAL</span><span id="rctot">$0.00</span></div>
       <div style="margin-top:20px"><span class="badge"><i></i>NEW ORDER</span></div>
@@ -264,10 +264,10 @@ s4txt.innerHTML=`<div class="kick" style="font-size:${PORT?24:26}px;margin-botto
  ['Reads the order.','Replies in seconds.','Puts it on your screen.'].map(s=>`<div class="mask s4l" style="font-size:${PORT?70:84}px;font-weight:700;letter-spacing:-.04em;line-height:1.08;white-space:nowrap;${PORT?'text-align:center':''}"><span>${s}</span></div>`).join('');
 const s4l=[...s4txt.querySelectorAll('.s4l')];
 const MSGS=[
- {d:'out',h:'Hola! 2 tacos al pastor y una Coca-Cola 🌮',t:9.35},
- {d:'in',h:'¡Claro! 🙌<br>2× Tacos al pastor — $7.00<br>1× Coca-Cola — $1.50<br><b>Total: $8.50</b><br>¿Para llevar o a domicilio?',t:10.65},
- {d:'out',h:'A domicilio, gracias',t:11.55},
- {d:'in',h:'Listo ✅ Pedido <b>#1042</b> confirmado. Llega en 25 min.',t:12.15},
+ {d:'out',h:'Hi! 2 chicken tacos and a Coke please 🌮',t:9.35},
+ {d:'in',h:'Sure! 🙌<br>2× Chicken tacos — $7.00<br>1× Coca-Cola — $1.50<br><b>Total: $8.50</b><br>Pickup or delivery?',t:10.65},
+ {d:'out',h:'Delivery please',t:11.55},
+ {d:'in',h:'Done ✅ Order <b>#1042</b> confirmed. Arriving in 25 min.',t:12.15},
 ];
 const msgs=$('msgs');
 const typing=document.createElement('div');typing.className='m in typing';typing.innerHTML='<i></i><i></i><i></i>';
