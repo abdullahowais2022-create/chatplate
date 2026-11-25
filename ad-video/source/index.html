@@ -14,6 +14,10 @@ html,body{margin:0;background:#000}
 .mono{font-family:JB,monospace}
 #grain{position:absolute;inset:0;pointer-events:none;opacity:.07;mix-blend-mode:overlay;z-index:50}
 #vig{position:absolute;inset:0;pointer-events:none;z-index:49;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.45) 100%)}
+.ph{position:absolute;inset:0;background-size:cover;background-repeat:no-repeat;will-change:transform}
+.pcard{position:absolute;left:0;top:0;overflow:hidden;background:#111}
+.pcard .shade{position:absolute;inset:0;background:linear-gradient(to top,rgba(10,8,6,.78) 0%,rgba(10,8,6,.15) 45%,rgba(10,8,6,0) 70%)}
+.plab{position:absolute;color:#fff;font-weight:700;letter-spacing:-.04em;line-height:1;white-space:nowrap}
 /* bubbles */
 .bub{background:#fff;border-radius:26px;padding:16px 24px 12px;font-size:31px;line-height:1.25;max-width:460px;box-shadow:0 18px 40px rgba(0,0,0,.35);white-space:nowrap}
 .bub .nm{font-size:21px;font-weight:650;margin-bottom:4px}
@@ -96,7 +100,7 @@ html,body{margin:0;background:#000}
 
   <!-- S1/S2 chaos -->
   <div id="s1" class="full">
-    <div id="blayer" class="full"></div>
+    <div id="ph1" class="ph" style="background-image:url(ph/28805273.jpg)"></div><div id="ph1dim" class="full" style="background:#141210"></div><div id="blayer" class="full"></div>
     <div id="pill" class="a"><span class="dot"></span><span id="pilltxt">1 new message</span></div>
     <div id="lines" class="full"></div>
   </div>
@@ -166,6 +170,11 @@ html,body{margin:0;background:#000}
     <div id="forall" class="a">Built for every local business.</div>
   </div>
 
+  <!-- S9 photos -->
+  <div id="s9" class="full"><div id="pcards" class="full"></div>
+    <div id="pkick" class="a" style="background:rgba(20,18,16,.72);color:#fff;border-radius:999px;padding:16px 30px;font-size:30px;font-weight:600;white-space:nowrap;display:flex;align-items:center;gap:14px;backdrop-filter:blur(6px)"><span style="width:14px;height:14px;border-radius:50%;background:#EE621A;display:block"></span>Built for every local business</div>
+  </div>
+
   <!-- S8 end -->
   <div id="s8" class="full">
     <div id="glow" class="a" style="border-radius:50%;background:radial-gradient(circle,rgba(238,98,26,.35),transparent 65%)"></div>
@@ -204,7 +213,7 @@ const lerp=(a,b,k)=>a+(b-a)*k;
 function T(el,x,y,s=1,r=0,sx){el.style.transform=`translate(${x}px,${y}px) translate(-50%,-50%) scale(${sx??s},${s}) rotate(${r}deg)`}
 function O(el,o){el.style.opacity=o}
 function Bl(el,b){el.style.filter=b>.1?`blur(${b.toFixed(2)}px)`:'none'}
-function vis(el,t,a,b){const v=t>=a&&t<b;el.style.display=v?'':'none';return v}
+function vis(el,t,a,b){const v=t>=a&&t<b&&(!window.ONLY||window.ONLY.includes(el.id));el.style.display=v?'':'none';return v}
 let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
 
 const LOGO=(bubble,rec,l1,l2,hl)=>`<svg viewBox="0 0 64 64" width="100%" height="100%"><path d="M32 4C16.54 4 4 15.4 4 29.5c0 7.3 3.37 13.88 8.78 18.53L10.2 59.2a1 1 0 0 0 1.43 1.1l12.06-6.02A30.6 30.6 0 0 0 32 55c15.46 0 28-11.4 28-25.5S47.46 4 32 4Z" fill="${bubble}"/>${hl?`<path d="M32 4C16.54 4 4 15.4 4 29.5c0 2 .25 3.9.72 5.75C8 22 19 12 32 12s24 10 27.28 23.25c.47-1.85.72-3.75.72-5.75C60 15.4 47.46 4 32 4Z" fill="${hl}" opacity=".55"/>`:''}<path d="M20 15a2.5 2.5 0 0 1 2.5-2.5h19A2.5 2.5 0 0 1 44 15v31l-3-2.2-3 2.2-3-2.2-3 2.2-3-2.2-3 2.2-3-2.2-3 2.2Z" fill="${rec}"/><rect x="25" y="20" width="14" height="2.6" rx="1.3" fill="${l1}"/><rect x="25" y="26" width="10" height="2.6" rx="1.3" fill="${l2}"/><rect x="25" y="32" width="12" height="2.6" rx="1.3" fill="${l2}"/></svg>`;
@@ -246,9 +255,9 @@ BUBS.forEach((b,i)=>{
   bubs.push({el,x,y,r:(rnd()-.5)*8,t:.15+i*.19});
 });
 const pill=$('pill'),pilltxt=$('pilltxt');
-const LINES=['Orders get lost.','Replies get slow.','Customers walk away.'];
+const LINES=['Orders. Questions.','Voice notes.','No one to reply.'];
 const lines=LINES.map((s,i)=>{const w=document.createElement('div');w.className='a mask big';w.style.fontSize=(PORT?118:150)+'px';
-  w.innerHTML=`<span>${PORT&&i===2?'Customers<br>walk away.':s}</span>`;$('lines').appendChild(w);return w});
+  w.innerHTML=`<span>${PORT&&i===0?'Orders.<br>Questions.':PORT&&i===2?'No one<br>to reply.':s}</span>`;$('lines').appendChild(w);return w});
 
 // ---------- S3 ----------
 const circ=$('circ');const D=Math.hypot(W,H);circ.style.width=circ.style.height=D+'px';
@@ -261,7 +270,7 @@ const wipe3=$('wipe3');wipe3.style.width=W+'px';wipe3.style.height=H+'px';
 // ---------- S4 ----------
 const s4txt=$('s4txt');
 s4txt.innerHTML=`<div class="kick" style="font-size:${PORT?24:26}px;margin-bottom:${PORT?18:28}px">On your WhatsApp · 24/7</div>`+
- ['Reads the order.','Replies in seconds.','Puts it on your screen.'].map(s=>`<div class="mask s4l" style="font-size:${PORT?70:84}px;font-weight:700;letter-spacing:-.04em;line-height:1.08;white-space:nowrap;${PORT?'text-align:center':''}"><span>${s}</span></div>`).join('');
+ ['Answers every customer.','With your real prices.','Confirmed in seconds.'].map(s=>`<div class="mask s4l" style="font-size:${PORT?70:70}px;font-weight:700;letter-spacing:-.04em;line-height:1.08;white-space:nowrap;${PORT?'text-align:center':''}"><span>${s}</span></div>`).join('');
 const s4l=[...s4txt.querySelectorAll('.s4l')];
 const MSGS=[
  {d:'out',h:'Hi! 2 chicken tacos and a Coke please 🌮',t:9.35},
@@ -321,6 +330,16 @@ const glow=$('glow');glow.style.width=glow.style.height=(Math.max(W,H)*1.1)+'px'
 let lwW=[];
 document.fonts.ready.then(()=>{lwW=lw.map(e=>{const d=e.style.display;e.style.display='';e.style.transform='none';const w=e.getBoundingClientRect().width;e.style.display=d;return w});window.READY=true;render(window.__t||0)});
 
+// ---------- S9 photos ----------
+const PH=[['ph/37594407.jpg','Restaurants',PORT?'38% 50%':'50% 45%'],['ph/30020992.jpg','Groceries',PORT?'50% 40%':'50% 30%'],['ph/14797863.jpg','Pharmacies',PORT?'50% 30%':'50% 20%'],['ph/34164499.jpg','Any shop',PORT?'50% 35%':'50% 16%']];
+const PT=[40.1,40.78,41.45,42.42];
+const pcards=PH.map((d,i)=>{const c=document.createElement('div');c.className='pcard';c.style.width=W+'px';c.style.height=H+'px';
+  c.innerHTML=`<div class="ph" style="background-image:url(${d[0]});background-position:${d[2]}"></div><div class="shade"></div><div class="plab mask"><span>${d[1]}<span style="color:#EE621A">.</span></span></div>`;
+  $('pcards').appendChild(c);const lab=c.querySelector('.plab');lab.style.fontSize=(PORT?150:170)+'px';
+  if(PORT){lab.style.left='50%';lab.style.bottom='15%';lab.style.transform='translateX(-50%)'}else{lab.style.left='7%';lab.style.bottom='12%'}
+  return c});
+// opening photo
+const ph1=$('ph1');
 function count(t,a,b,to){return to*E.oCub(p(t,a,b))}
 
 // ============ RENDER ============
@@ -400,7 +419,7 @@ function render(t){
     const shiftX=-xk*W*.35;
     $('s4').style.transform=`translateX(${shiftX}px)`;$('s4').style.opacity=1-xk;Bl($('s4'),xk*14);
     const ps=PORT?1.27:1.0;
-    const phx=PORT?cx:W*.64, phy=PORT?H*.615:cy;
+    const phx=PORT?cx:W*.685, phy=PORT?H*.615:cy;
     T(phone,phx,phy+(1-ek)*H*.6,ps,(1-ek)*8+(PORT?0:-2)*ek);
     // text
     if(PORT){T(s4txt,cx,H*.155+(1-ek)*40)}else{s4txt.style.transform=`translate(${W*.07}px,${H*.5}px) translate(0,-50%) translateY(${(1-ek)*40}px)`}
@@ -423,7 +442,7 @@ function render(t){
     const printed=Math.min(1,Math.floor(rk*14)/14*.85+E.oCub(rk)*.15);
     rc.style.transform=`translateY(${-(1-printed)*100}%)`;
     const rs=PORT?1.15:1.12;
-    const rx=PORT?W*.7:W*.835, ry=PORT?H*.72:H*.56;
+    const rx=PORT?W*.7:W*.865, ry=PORT?H*.72:H*.56;
     T(receipt,rx,ry,rs,lerp(0,PORT?5:4,E.oCub(p(t,12.7,13.6))));
     $('rctot').textContent='$'+count(t,13.0,13.55,8.5).toFixed(2);
   }
@@ -530,6 +549,28 @@ function render(t){
     }else{O($('forall'),0)}
   }
 
+  // ---- opening photo ----
+  if($('s1').style.display!=='none'){
+    const kb=1.16-0.12*E.ioCub(p(t,0,6));ph1.style.transform=`scale(${kb})`;
+    const dimk=E.oCub(p(t,3.0,3.6));
+    O($('ph1dim'),.42+dimk*.35);Bl(ph1,dimk*10);
+  }
+  // ---- S9 photos ----
+  if(vis($('s9'),t,40,44.2)){
+    pcards.forEach((c,i)=>{const a=PT[i];const k=E.oExpo(p(t,a,a+.42));
+      c.style.display=t>=a-.01?'':'none';
+      const nk=i<3?E.oExpo(p(t,PT[i+1],PT[i+1]+.42)):0;
+      c.style.transform=`translateX(${(1-k)*W - nk*W*.18}px)`;
+      c.querySelector('.ph').style.transform=`scale(${1.14-0.1*E.oCub(p(t,a,a+1.6))})`;
+      c.style.filter=nk>.02?`brightness(${1-nk*.45})`:'none';
+      const lk=E.oExpo(p(t,a+.1,a+.55));c.querySelector('.plab span').style.transform=`translateY(${(1-lk)*110}%)`;
+      c.style.boxShadow=k<1?'-30px 0 60px rgba(0,0,0,.45)':'none';
+    });
+    const xk=E.iExpo(p(t,43.65,44.1));
+    $('pcards').style.transform=`scale(${1-xk*.12})`;$('pcards').style.opacity=1-xk;
+    const kk=E.oBack(p(t,40.2,40.6),1.8);
+    T($('pkick'),cx,(PORT?H*.09:H*.1),Math.max(.001,kk)*(PORT?1:1.05));O($('pkick'),cl(kk*2)*(1-xk));
+  }
   // ---- S8 end card ----
   if(vis($('s8'),t,26.45,99)){
     const lk=E.oBack(p(t,26.5,27.05),2.4);
@@ -539,13 +580,13 @@ function render(t){
     wm8c.forEach((c,i)=>{const k=E.oExpo(p(t,26.8+i*.04,27.35+i*.04));c.style.transform=`translateY(${(1-k)*80}px)`;c.style.opacity=k});
     T(wm8,cx,PORT?H*.46:H*.5);
     const ty=PORT?H*.55:H*.65;
-    tag8w.forEach((w,i)=>{const k=E.oExpo(p(t,27.4+i*.12,27.9+i*.12));w.style.transform=`translateY(${(1-k)*40}px)`;w.style.opacity=k});
+    tag8w.forEach((w,i)=>{const a8=[27.5,27.92,28.62][i];const k=E.oExpo(p(t,a8,a8+.45));w.style.transform=`translateY(${(1-k)*40}px)`;w.style.opacity=k});
     $('tag8').style.fontSize=(PORT?64:62)+'px';
     T($('tag8'),cx,ty);
-    const ck=E.oBack(p(t,27.95,28.4),2);
-    const pulse=t>28.6?1+.035*Math.max(0,Math.sin((t-28.6)*Math.PI*2)):1;
+    const ck=E.oBack(p(t,29.0,29.45),2);
+    const pulse=t>29.6?1+.035*Math.max(0,Math.sin((t-29.6)*Math.PI*2)):1;
     T($('cta'),cx,PORT?H*.67:H*.8,Math.max(.001,ck)*pulse);
-    const fk=E.oCub(p(t,28.4,28.9));
+    const fk=E.oCub(p(t,29.4,29.9));
     T($('foot8'),cx,(PORT?H*.92:H*.93)+(1-fk)*20);O($('foot8'),fk*.9);
     $('foot8').style.fontSize=(PORT?22:22)+'px';
   }
